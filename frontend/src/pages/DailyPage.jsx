@@ -72,9 +72,9 @@ export default function DailyPage() {
   async function handleGenerateAITopics(category = 'general') {
     setGeneratingTopic(true);
     try {
-      const response = await api.post('/ai/generate-topics', {
+      const response = await api.post('/ai/generate-topic', {
         category,
-        count: 3
+        relationshipStage: 'stable'
       });
       if (response.data.success) {
         setGeneratedTopics(response.data.data.topics);

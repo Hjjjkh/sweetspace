@@ -1,15 +1,8 @@
 import { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 
-/**
- * AI 功能按钮组件
- * @param {Object} props
- * @param {string} props.type - 按钮类型：analyze, generate, polish, plan
- * @param {Function} props.onGenerate - 生成成功回调
- * @param {string} [props.label] - 自定义按钮文字
- * @param {boolean} [props.disabled] - 是否禁用
- * @param {Object} [props.data] - 传递给 API 的数据
- */
+// AI 功能按钮组件
+// 支持：analyze-mood, generate-photo-desc, polish-message, plan-date, relationship-insight, generate-topic
 export default function AIButton({ 
   type = 'generate', 
   onGenerate, 
@@ -26,15 +19,17 @@ export default function AIButton({
     generate: 'AI 生成',
     polish: 'AI 润色',
     plan: 'AI 策划',
-    insight: 'AI 洞察'
+    insight: 'AI 洞察',
+    topic: 'AI 话题'
   };
 
   const endpoints = {
     analyze: '/api/ai/analyze-mood',
-    generate: '/api/ai/generate',
+    generate: '/api/ai/generate-photo-desc',
     polish: '/api/ai/polish-message',
     plan: '/api/ai/plan-date',
-    insight: '/api/ai/relationship-insight'
+    insight: '/api/ai/relationship-insight',
+    topic: '/api/ai/generate-topic'
   };
 
   const handleClick = async () => {
