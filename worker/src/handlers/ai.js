@@ -150,20 +150,47 @@ async function handleTopicGeneration(request, env, user) {
     return new Response('Method not allowed', { status: 405 });
   }
 
-  const { category = 'general', relationshipStage = 'stable' } = await request.json();
+  try {
+    const { category = 'general', relationshipStage = 'stable' } = await request.json();
 
-  const aiService = new AIService(env, user);
-  const prompt = getTopicGenerationPrompt(category, relationshipStage);
+    console.log('AI Topic Generation:', { category, relationshipStage });
 
-  const result = await aiService.getResponse('topic', prompt);
+    const aiService = new AIService(env, user);
+    
+    // Check if AI is enabled
+    if (!aiService.isEnabled()) {
+      console.error('AI service not enabled - missing API key');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'AI service not configured. Please set OPENROUTER_API_KEY in Cloudflare Secrets.'
+      }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
-  return new Response(JSON.stringify({
-    success: true,
-    topics: parseTopics(result.content),
-    fromCache: result.fromCache
-  }), {
-    headers: { 'Content-Type': 'application/json' }
-  });
+    const prompt = getTopicGenerationPrompt(category, relationshipStage);
+    const result = await aiService.getResponse('topic', prompt);
+
+    console.log('AI topics generated:', result.content);
+
+    return new Response(JSON.stringify({
+      success: true,
+      topics: parseTopics(result.content),
+      fromCache: result.fromCache
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    console.error('Topic generation error:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: error.message
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 }
 
 // Relationship Insight Handler
