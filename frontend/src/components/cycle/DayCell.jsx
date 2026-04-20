@@ -43,7 +43,7 @@ export default function DayCell({ day, onClick }) {
     >
       {/* 日期 */}
       <div className="text-xs font-bold w-full text-center">
-        {format(new Date(date), 'd')}
+        {new Date(date).getDate()}
       </div>
 
       {/* 周期天数 */}

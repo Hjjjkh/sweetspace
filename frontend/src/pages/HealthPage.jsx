@@ -1,44 +1,12 @@
 import { useState, useEffect } from 'react';
 import { format, startOfWeek, addWeeks, subWeeks, isToday } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Heart, Droplet, Apple, Coffee, Dumbbell, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import WeekCalendar from '../components/cycle/WeekCalendar';
 import CycleOverview from '../components/cycle/CycleOverview';
 import CycleSetupModal from '../components/cycle/CycleSetupModal';
 import DayEditModal from '../components/cycle/DayEditModal';
-
-const periodLengthOptions = [
-  { value: 'none', label: '无' },
-  { value: 'light', label: '少量' },
-  { value: 'medium', label: '中等' },
-  { value: 'heavy', label: '大量' }
-];
-
-const commonSymptoms = [
-  { value: 'cramps', label: '痛经' },
-  { value: 'headache', label: '头痛' },
-  { value: 'bloating', label: '腹胀' },
-  { value: 'breast_tenderness', label: '乳房胀痛' },
-  { value: 'acne', label: '痘痘' },
-  { value: 'fatigue', label: '疲劳' },
-  { value: 'backache', label: '腰痛' }
-];
-
-const habitIcons = {
-  water: Droplet,
-  fruit: Apple,
-  breakfast: Coffee,
-  exercise: Dumbbell,
-  bowel: Check
-};
-
-const moodEmojis = {
-  love: '😍',
-  happy: '🙂',
-  neutral: '😐',
-  sad: '😢'
-};
 
 export default function HealthPage() {
   const { user } = useAuth();

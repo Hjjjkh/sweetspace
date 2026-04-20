@@ -1,4 +1,4 @@
-import { format, differenceInDays } from 'date-fns';
+import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { Droplet, Calendar, TrendingUp } from 'lucide-react';
 
