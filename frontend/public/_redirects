@@ -1,4 +1,7 @@
 # API Proxy Configuration
 # Routes all /api requests to the Worker backend
 
-/api/*  https://sweetspace.248851185.workers.dev/api/:splat  200
+/api/* https://sweetspace.248851185.workers.dev/api/:splat 200
+
+# SPA fallback
+/* /index.html 200
