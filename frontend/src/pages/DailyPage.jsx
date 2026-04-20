@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api, useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Sparkles, BookOpen, Calendar, Check } from 'lucide-react';
+import { Sparkles, BookOpen, Calendar, Check, X } from 'lucide-react';
 
 const categories = {
   general: { label: '日常', color: 'from-blue-400 to-cyan-400' },
@@ -70,6 +70,22 @@ export default function DailyPage() {
   }
 
   async function handleGenerateAITopics(category = 'general') {
+    setGeneratingTopic(true);
+    try {
+      const response = await api.post('/ai/generate-topics', {
+        category,
+        count: 3
+      });
+      if (response.data.success) {
+        setGeneratedTopics(response.data.data.topics);
+      }
+    } catch (error) {
+      console.error('Generate AI topics error:', error);
+      alert('AI 话题生成失败，请稍后再试');
+    } finally {
+      setGeneratingTopic(false);
+    }
+  }
 
   async function loadHistory() {
     try {
