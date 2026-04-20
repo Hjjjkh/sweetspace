@@ -248,6 +248,7 @@ export default function DailyPage() {
             )}
           </div>
         </div>
+      ) : (
         <div className="bg-white/70 backdrop-blur-glass border border-rose-border rounded-2xl p-12 text-center shadow-glass">
           <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md animate-float">
             <Sparkles className="w-8 h-8 text-white" />
