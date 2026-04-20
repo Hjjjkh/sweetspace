@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Home, Calendar, Mail, Smile, Sparkles, Image, Heart, Menu, X, Settings } from 'lucide-react';
+import { Home, Calendar, Mail, Smile, Sparkles, Image, Heart, Menu, X, Settings, Activity } from 'lucide-react';
 
 const navItems = [
   { path: '/', label: '首页', icon: Home },
@@ -10,6 +10,7 @@ const navItems = [
   { path: '/moods', label: '心情', icon: Smile },
   { path: '/daily', label: '每日', icon: Sparkles },
   { path: '/gallery', label: '相册', icon: Image },
+  { path: '/health', label: '健康', icon: Activity },
 ];
 
 export default function Layout() {

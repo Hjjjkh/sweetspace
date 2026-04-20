@@ -20,6 +20,7 @@ import { handleUpload, handleGetPhotos, handleDeletePhoto, handleDownloadFile } 
 import { handleOverview } from './handlers/overview.js';
 import { handleCron } from './handlers/cron.js';
 import { handleAIRequest } from './handlers/ai.js';
+import { handleCycle } from './handlers/cycle.js';
 import { corsHeaders } from './utils/cors.js';
 
 export default {
@@ -117,6 +118,11 @@ export default {
       // AI 功能
       if (path.startsWith('/api/ai/')) {
         return handleAIRequest(request, env, user);
+      }
+
+      // 生理周期 + 健康记录
+      if (path.startsWith('/api/cycle/')) {
+        return handleCycle(request, env, user, ctx);
       }
 
       // 404
