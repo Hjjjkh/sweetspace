@@ -1,8 +1,6 @@
 // Love Space AI Service
 // OpenRouter API integration with caching and rate limiting
 
-import { md5 } from 'crypto-hash';
-
 export class AIService {
   constructor(env, user) {
     this.env = env;
@@ -46,7 +44,7 @@ export class AIService {
 
   // Get cached response
   async getCachedResponse(requestType, content) {
-    const requestHash = await md5(`${requestType}:${content}`);
+    const requestHash = await this.md5(`${requestType}:${content}`);
 
     const cached = await this.env.DB.prepare(
       'SELECT response_content, metadata FROM ai_responses WHERE request_hash = ? AND expires_at > ? AND user_id = ?'
@@ -68,7 +66,7 @@ export class AIService {
   // Cache AI response
   async cacheResponse(requestType, content, response, metadata = null) {
     const id = crypto.randomUUID();
-    const requestHash = await md5(`${requestType}:${content}`);
+    const requestHash = await this.md5(`${requestType}:${content}`);
     const now = Math.floor(Date.now() / 1000);
     const expiresAt = now + (this.cacheDays * 24 * 60 * 60);
 
@@ -254,6 +252,15 @@ export class AIService {
         maxAge: this.cacheDays
       }
     };
+  }
+
+  // MD5 hash using Web Crypto API (compatible with Cloudflare Workers)
+  async md5(text) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 }
 
