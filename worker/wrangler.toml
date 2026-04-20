@@ -21,7 +21,7 @@ MAX_FILE_SIZE = "10485760"
 ALLOWED_TYPES = "image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime"
 
 # AI Configuration
-OPENROUTER_API_KEY = "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"
+# OPENROUTER_API_KEY 需要使用 Cloudflare Secrets 配置：npx wrangler secret put OPENROUTER_API_KEY
 AI_MODEL = "openrouter/elephant-alpha"
 AI_RATE_LIMIT = "100"
 AI_CACHE_DAYS = "30"
