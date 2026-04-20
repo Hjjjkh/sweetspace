@@ -214,42 +214,40 @@ export default function DailyPage() {
                 )}
               </div>
             )}
+
+            {/* AI 生成话题 */}
+            {generatedTopics.length > 0 && (
+              <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-5 mt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-white" />
+                    <h3 className="font-bold text-white">AI 生成的话题</h3>
+                  </div>
+                  <button
+                    onClick={() => setGeneratedTopics([])}
+                    className="text-white/70 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {generatedTopics.map((topic, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white/20 rounded-lg p-3 hover:bg-white/30 transition-all cursor-pointer"
+                      onClick={() => {
+                        navigator.clipboard.writeText(topic);
+                        alert('已复制话题');
+                      }}
+                    >
+                      <p className="text-white text-sm">{topic}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* AI 生成话题 */}
-        {generatedTopics.length > 0 && (
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-600" />
-                <h3 className="font-bold text-gray-800">AI 生成的话题</h3>
-              </div>
-              <button
-                onClick={() => setGeneratedTopics([])}
-                className="text-gray-400 hover:text-gray-600 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="grid gap-3">
-              {generatedTopics.map((topic, idx) => (
-                <div
-                  key={idx}
-                  className="bg-white/70 backdrop-blur-sm border border-purple-100 rounded-xl p-4 hover:shadow-md transition-all cursor-pointer"
-                  onClick={() => {
-                    navigator.clipboard.writeText(topic);
-                    alert('已复制话题');
-                  }}
-                >
-                  <p className="text-gray-800 font-medium">{topic}</p>
-                  <span className="text-xs text-purple-500 mt-2 block">点击复制</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      ) : (
         <div className="bg-white/70 backdrop-blur-glass border border-rose-border rounded-2xl p-12 text-center shadow-glass">
           <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md animate-float">
             <Sparkles className="w-8 h-8 text-white" />
