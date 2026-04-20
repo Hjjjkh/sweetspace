@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../hooks/useAuth';
-import { useAuth } from '../hooks/useAuth';
+import { api, useAuth } from '../hooks/useAuth';
 import { format, differenceInDays } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { Calendar, Mail, Smile, Flame, Heart, Plus, Camera } from 'lucide-react';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -30,153 +30,210 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+          <div className="absolute top-0 left-0 w-16 h-16 border-4 border-transparent border-t-pink-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* 欢迎区域 */}
-      <div className="card bg-gradient-to-r from-primary-500 to-pink-500 text-white">
-        <h2 className="text-2xl font-bold mb-2">
-          早安，{user?.name} ☀️
-        </h2>
-        <p className="opacity-90">
-          这是你们在一起的第 {overview?.days_together || 0} 天
-        </p>
+      <div className="relative overflow-hidden bg-gradient-to-r from-primary-500 via-pink-500 to-rose-500 rounded-3xl p-6 sm:p-8 text-white shadow-floating">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
+        <div className="relative z-10">
+          <div className="flex items-center space-x-2 mb-3">
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+              <Heart className="w-5 h-5" fill="currentColor" />
+            </div>
+            <span className="text-sm font-medium bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+              {format(new Date(), 'EEEE, MMMM d', { locale: zhCN })}
+            </span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-3 font-display">
+            {getGreeting()}, {user?.name}
+          </h2>
+          <p className="text-lg sm:text-xl opacity-95">
+            这是你们相爱的第 <span className="font-bold text-2xl">{overview?.days_together || 0}</span> 天
+          </p>
+        </div>
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
-          icon="📅" 
+          icon={Calendar}
+          iconBg="from-blue-400 to-cyan-400"
           label="共同回忆" 
           value={overview?.total_events || 0} 
         />
         <StatCard 
-          icon="💌" 
+          icon={Mail}
+          iconBg="from-pink-400 to-rose-400"
           label="留言条数" 
           value={overview?.total_messages || 0} 
         />
         <StatCard 
-          icon="😊" 
+          icon={Smile}
+          iconBg="from-yellow-400 to-orange-400"
           label="心情记录" 
           value={overview?.recent_moods?.length || 0} 
         />
         <StatCard 
-          icon="🔥" 
+          icon={Flame}
+          iconBg="from-red-400 to-pink-400"
           label="连续互动" 
           value={overview?.streak_days || 0} 
         />
       </div>
 
-      {/* 最近情绪 */}
-      {overview?.recent_moods?.length > 0 && (
-        <div className="card">
-          <h3 className="section-title">最近心情</h3>
-          <div className="space-y-3">
-            {overview.recent_moods.slice(0, 5).map((mood, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">
-                    {getMoodEmoji(mood.mood_type)}
-                  </span>
-                  <div>
-                    <p className="font-medium">{mood.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {format(new Date(mood.date), 'PPP', { locale: zhCN })}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 最近情绪 */}
+        {overview?.recent_moods?.length > 0 && (
+          <div className="bg-white/70 backdrop-blur-glass border border-rose-border rounded-2xl p-6 shadow-glass">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-800 font-display">最近心情</h3>
+              <Link to="/moods" className="text-sm text-primary-600 hover:text-primary-700 font-medium cursor-pointer">
+                查看全部 →
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {overview.recent_moods.slice(0, 4).map((mood, idx) => (
+                <div key={idx} className="flex items-center space-x-4 p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-all duration-200 cursor-pointer">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md ${
+                    getMoodBgClass(mood.mood_type)
+                  }`}>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-800">{mood.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {format(new Date(mood.date), 'MMM d, yyyy', { locale: zhCN })}
                     </p>
                   </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-24 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-primary-500 h-2 rounded-full"
-                      style={{ width: `${(mood.mood_score / 10) * 100}%` }}
-                    ></div>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-20 bg-gray-200/50 rounded-full h-2.5">
+                      <div 
+                        className={`h-2.5 rounded-full transition-all duration-500 ${getMoodProgressClass(mood.mood_score)}`}
+                        style={{ width: `${(mood.mood_score / 10) * 100}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm font-bold text-gray-700 w-8 text-right">
+                      {mood.mood_score}
+                    </span>
                   </div>
-                  <span className="text-sm font-medium text-gray-600">
-                    {mood.mood_score}/10
-                  </span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* 快捷操作 */}
-      <div className="card">
-        <h3 className="section-title">快捷操作</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <QuickAction 
-            icon="✍️" 
-            label="记录今天" 
-            link="/moods" 
-          />
-          <QuickAction 
-            icon="💝" 
-            label="写留言" 
-            link="/messages" 
-          />
-          <QuickAction 
-            icon="📸" 
-            label="传照片" 
-            link="/gallery" 
-          />
+        {/* 快捷操作 */}
+        <div className="bg-white/70 backdrop-blur-glass border border-rose-border rounded-2xl p-6 shadow-glass">
+          <h3 className="text-lg font-bold text-gray-800 font-display mb-4">快捷操作</h3>
+          <div className="grid grid-cols-3 gap-3">
+            <QuickAction 
+              icon={Smile}
+              iconBg="from-yellow-400 to-orange-400"
+              label="记录今天" 
+              link="/moods" 
+            />
+            <QuickAction 
+              icon={Heart}
+              iconBg="from-pink-400 to-rose-400"
+              label="写留言" 
+              link="/messages" 
+            />
+            <QuickAction 
+              icon={Camera}
+              iconBg="from-purple-400 to-pink-400"
+              label="传照片" 
+              link="/gallery" 
+            />
+          </div>
         </div>
       </div>
 
       {/* 即将到来 */}
       {overview?.upcoming_anniversaries?.length > 0 && (
-        <div className="card bg-gradient-to-r from-pink-100 to-red-100">
-          <h3 className="section-title">💕 即将到来的纪念日</h3>
-          {overview.upcoming_anniversaries.map((anni, idx) => (
-            <div key={idx} className="text-center py-4">
-              <p className="text-lg font-bold text-gray-800">
-                {anni.name}
-              </p>
-              <p className="text-4xl font-bold text-primary-600 my-2">
-                {anni.days_until}
-              </p>
-              <p className="text-gray-600">天后</p>
+        <div className="relative overflow-hidden bg-gradient-to-r from-pink-100 via-rose-100 to-red-100 rounded-2xl p-6 shadow-glass border border-rose-border">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-white/30 rounded-full -translate-y-1/2 translate-x-1/3"></div>
+          <div className="relative z-10">
+            <h3 className="text-lg font-bold text-gray-800 font-display mb-4 flex items-center">
+              <Heart className="w-5 h-5 text-primary-500 mr-2" fill="currentColor" />
+              即将到来的纪念日
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {overview.upcoming_anniversaries.map((anni, idx) => (
+                <div key={idx} className="bg-white/60 backdrop-blur-sm rounded-xl p-4 text-center hover:bg-white/80 transition-all duration-200 cursor-pointer">
+                  <p className="text-sm font-medium text-gray-600 mb-2">
+                    {anni.name}
+                  </p>
+                  <p className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-accent-500 bg-clip-text text-transparent mb-1">
+                    {anni.days_until}
+                  </p>
+                  <p className="text-xs text-gray-500">天后</p>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-function StatCard({ icon, label, value }) {
+function StatCard({ icon: Icon, iconBg, label, value }) {
   return (
-    <div className="card text-center p-4">
-      <div className="text-4xl mb-2">{icon}</div>
-      <p className="text-2xl font-bold text-gray-800">{value}</p>
-      <p className="text-sm text-gray-500">{label}</p>
+    <div className="bg-white/70 backdrop-blur-glass border border-rose-border rounded-2xl p-4 shadow-glass hover:shadow-floating transition-all duration-300 cursor-pointer hover:-translate-y-1">
+      <div className={`w-12 h-12 bg-gradient-to-br ${iconBg} rounded-xl flex items-center justify-center shadow-md mb-3`}>
+        <Icon className="w-6 h-6 text-white" />
+      </div>
+      <p className="text-3xl font-bold text-gray-800 font-display mb-1">{value}</p>
+      <p className="text-sm text-gray-500 font-medium">{label}</p>
     </div>
   );
 }
 
-function QuickAction({ icon, label, link }) {
+function QuickAction({ icon: Icon, iconBg, label, link }) {
   return (
-    <Link to={link} className="flex flex-col items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-      <span className="text-3xl mb-2">{icon}</span>
-      <span className="text-sm font-medium text-gray-700">{label}</span>
+    <Link to={link} className="flex flex-col items-center p-4 bg-white/50 hover:bg-white/70 rounded-xl transition-all duration-200 cursor-pointer hover:-translate-y-1 hover:shadow-md group">
+      <div className={`w-14 h-14 bg-gradient-to-br ${iconBg} rounded-2xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300 mb-3`}>
+        <Icon className="w-7 h-7 text-white" />
+      </div>
+      <span className="text-sm font-medium text-gray-700 text-center">{label}</span>
     </Link>
   );
 }
 
-function getMoodEmoji(moodType) {
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 6) return '夜深了';
+  if (hour < 9) return '早安';
+  if (hour < 12) return '上午好';
+  if (hour < 14) return '中午好';
+  if (hour < 18) return '下午好';
+  if (hour < 22) return '晚上好';
+  return '晚安';
+}
+
+function getMoodBgClass(moodType) {
   const moodMap = {
-    happy: '😊',
-    love: '😍',
-    excited: '🤩',
-    neutral: '😐',
-    tired: '😴',
-    sad: '😢',
-    stressed: '😰'
+    happy: 'bg-gradient-to-br from-yellow-400 to-orange-400',
+    love: 'bg-gradient-to-br from-pink-400 to-rose-400',
+    excited: 'bg-gradient-to-br from-purple-400 to-pink-400',
+    neutral: 'bg-gradient-to-br from-gray-400 to-gray-500',
+    tired: 'bg-gradient-to-br from-blue-400 to-cyan-400',
+    sad: 'bg-gradient-to-br from-blue-500 to-indigo-500',
+    stressed: 'bg-gradient-to-br from-red-400 to-orange-400'
   };
-  return moodMap[moodType] || '😊';
+  return moodMap[moodType] || 'bg-gradient-to-br from-gray-400 to-gray-500';
+}
+
+function getMoodProgressClass(score) {
+  if (score >= 8) return 'bg-gradient-to-r from-green-400 to-emerald-400';
+  if (score >= 5) return 'bg-gradient-to-r from-yellow-400 to-orange-400';
+  return 'bg-gradient-to-r from-red-400 to-rose-400';
 }

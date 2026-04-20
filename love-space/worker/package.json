@@ -1,6 +1,6 @@
 {
   "name": "love-space-worker",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,10 +10,13 @@
     "init-db:prod": "wrangler d1 execute love-space-db --file=./schema.sql",
     "tail": "wrangler tail"
   },
-  "devDependencies": {
-    "wrangler": "^3.0.0"
-  },
   "dependencies": {
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "wrangler": "^3.105.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

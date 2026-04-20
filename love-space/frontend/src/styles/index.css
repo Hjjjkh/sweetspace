@@ -2,50 +2,120 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Great+Vibes&family=Inter:wght@300;400;500;600;700&display=swap');
+
 :root {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1f2937;
-  background-color: #fdf2f8;
+  background-color: #fff1f2;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 #root {
   min-height: 100vh;
 }
 
+* {
+  cursor: default;
+}
+
+button, a, input[type="checkbox"], input[type="radio"] {
+  cursor: pointer;
+}
+
 @layer components {
-  .btn-primary {
-    @apply bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  /* 玻璃态卡片 */
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-glass border border-rose-border shadow-glass rounded-2xl;
   }
 
+  /* 渐变按钮 */
+  .btn-gradient {
+    @apply bg-gradient-to-r from-primary-500 to-pink-500 text-white font-medium py-2.5 px-5 rounded-xl shadow-lg hover:shadow-floating transition-all duration-300 cursor-pointer hover:-translate-y-0.5;
+  }
+
+  /* 次要按钮 */
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    @apply bg-white/70 backdrop-blur-glass border border-rose-border text-gray-700 font-medium py-2.5 px-5 rounded-xl hover:bg-white/90 transition-all duration-200 cursor-pointer;
   }
 
-  .card {
-    @apply bg-white rounded-2xl shadow-lg p-6;
+  /* 输入框 */
+  .input-glass {
+    @apply w-full px-4 py-2.5 bg-white/50 backdrop-blur-sm border border-rose-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-transparent transition-all duration-200;
   }
 
-  .input-field {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all;
+  /* 标题样式 */
+  .title-display {
+    @apply text-2xl sm:text-3xl font-bold text-gray-800 font-display;
   }
 
-  .section-title {
-    @apply text-2xl font-bold text-gray-800 mb-4;
+  /* 卡片标题 */
+  .card-title {
+    @apply text-lg font-bold text-gray-800 font-display;
   }
+}
+
+/* 安全区域支持 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(244, 63, 94, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(244, 63, 94, 0.5);
+}
+
+/* 文本截断 */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 /* 移动端优化 */
 @media (max-width: 640px) {
-  .card {
+  .glass-card {
     @apply p-4 rounded-xl;
   }
   
-  .section-title {
+  .title-display {
     @apply text-xl;
   }
 }

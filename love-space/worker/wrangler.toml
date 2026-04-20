@@ -1,29 +1,27 @@
-name = "love-space-worker"
+name = "sweetspace"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
-# D1 Database 绑定
+# D1 Database binding
 [[d1_databases]]
 binding = "DB"
 database_name = "love-space-db"
-database_id = "YOUR_D1_DATABASE_ID"
+database_id = "YOUR_DATABASE_ID_HERE"
 
-# R2 Storage Bucket 绑定
-[[r2_buckets]]
-binding = "BUCKET"
-bucket_name = "love-space-media"
+# R2 Storage binding (optional - for gallery)
+# [[r2_buckets]]
+# binding = "BUCKET"
+# bucket_name = "love-space-photos"
 
-# Cron Trigger 配置
-[triggers]
-crons = ["0 0 * * *"]
-
-# 环境变量
+# Environment variables
 [vars]
 ENVIRONMENT = "production"
-MAX_FILE_SIZE = "10485760"
-ALLOWED_TYPES = "image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime"
 
-# 开发环境配置
+# Development configuration
 [dev]
 port = 8787
 local_protocol = "http"
+
+# Cron triggers (for daily questions)
+# [[triggers]]
+# crons = ["0 0 * * *"]

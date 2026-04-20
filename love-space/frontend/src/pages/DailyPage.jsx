@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../hooks/useAuth';
+import { api, useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { useAuth } from '../hooks/useAuth';
+import { Sparkles, BookOpen, Calendar, Check } from 'lucide-react';
+
+const categories = {
+  general: { label: '日常', color: 'from-blue-400 to-cyan-400' },
+  deep: { label: '深入', color: 'from-purple-400 to-pink-400' },
+  fun: { label: '趣味', color: 'from-yellow-400 to-orange-400' },
+  memory: { label: '回忆', color: 'from-pink-400 to-rose-400' },
+  future: { label: '未来', color: 'from-green-400 to-emerald-400' }
+};
 
 export default function DailyPage() {
   const { user } = useAuth();
@@ -48,7 +56,6 @@ export default function DailyPage() {
       if (response.data.success) {
         await fetchDailyQuestion();
         setAnswer('');
-        alert('回答成功！💕');
       }
     } catch (error) {
       if (error.response?.status === 409) {
@@ -71,147 +78,178 @@ export default function DailyPage() {
     }
   }
 
-  const categories = {
-    general: '日常',
-    deep: '深入',
-    fun: '趣味',
-    memory: '回忆',
-    future: '未来'
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        <div className="relative">
+          <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <h2 className="section-title">✨ 每日互动</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 font-display flex items-center">
+          <Sparkles className="w-7 h-7 mr-3 text-primary-500" />
+          每日互动
+        </h2>
         <button
           onClick={loadHistory}
-          className="text-sm text-primary-600 hover:underline"
+          className="flex items-center space-x-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors cursor-pointer"
         >
-          查看历史
+          <BookOpen className="w-4 h-4" />
+          <span>查看历史</span>
         </button>
       </div>
 
       {/* 今日问题卡片 */}
-      <div className="card bg-gradient-to-br from-pink-500 to-red-500 text-white">
-        <div className="flex items-center space-x-2 mb-4">
-          <span className="text-2xl">🌟</span>
-          <span className="font-medium opacity-90">
-            {dailyData?.question ? '今日问题' : '问题生成中'}
-          </span>
-          {dailyData?.question && (
-            <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
-              {categories[dailyData.question.category]}
-            </span>
-          )}
-        </div>
+      {dailyData?.question ? (
+        <div className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-pink-500 to-rose-500 rounded-3xl p-6 sm:p-8 text-white shadow-floating">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/3 -translate-x-1/4"></div>
+          
+          <div className="relative z-10">
+            <div className="flex items-center space-x-3 mb-5">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                <Sparkles className="w-6 h-6" fill="currentColor" />
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="font-medium">今日问题</span>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${categories[dailyData.question.category]?.color || 'from-gray-400 to-gray-500'}`}>
+                  {categories[dailyData.question.category]?.label || '日常'}
+                </span>
+              </div>
+            </div>
 
-        {dailyData?.question ? (
-          <>
-            <p className="text-xl font-bold mb-2 leading-relaxed">
+            <p className="text-2xl sm:text-3xl font-bold mb-3 leading-relaxed font-display">
               {dailyData.question.question}
             </p>
-            <p className="text-sm opacity-90 mb-4">
+            <p className="text-sm sm:text-base opacity-90 mb-6 flex items-center">
+              <Calendar className="w-4 h-4 mr-1.5" />
               {format(new Date(dailyData.question.date), 'yyyy 年 MM 月 dd 日', { locale: zhCN })}
             </p>
 
             {!dailyData.my_answer ? (
-              <form onSubmit={handleSubmit} className="space-y-4 bg-white/10 rounded-lg p-4">
-                <textarea
-                  className="w-full px-3 py-2 rounded-lg text-gray-800 outline-none resize-none"
-                  rows="3"
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="写下你的答案..."
-                />
-
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={isVisible}
-                    onChange={(e) => setIsVisible(e.target.checked)}
-                    className="rounded"
+              <form onSubmit={handleSubmit} className="bg-white/15 backdrop-blur-sm rounded-2xl p-5 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2 opacity-90">
+                    你的回答
+                  </label>
+                  <textarea
+                    className="w-full px-4 py-3 rounded-xl text-gray-800 bg-white/90 backdrop-blur-sm outline-none resize-none border-2 border-transparent focus:border-white/50 transition-all duration-200"
+                    rows="4"
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    placeholder="写下你的答案..."
                   />
-                  <span className="text-sm">让 TA 看到我的答案</span>
+                </div>
+
+                <label className="flex items-center space-x-2 cursor-pointer group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={isVisible}
+                      onChange={(e) => setIsVisible(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-5 h-5 bg-white/20 rounded border border-white/30 peer-checked:bg-white peer-checked:border-white transition-all duration-200 flex items-center justify-center">
+                      {isVisible && <Check className="w-3.5 h-3.5 text-pink-500" strokeWidth={3} />}
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium group-hover:opacity-100 opacity-90 transition-opacity">
+                    让 TA 看到我的答案
+                  </span>
                 </label>
 
-                <button type="submit" className="btn-primary bg-white text-pink-600 hover:bg-white/90 w-full">
+                <button 
+                  type="submit" 
+                  className="w-full bg-white text-pink-600 font-bold py-3.5 rounded-xl hover:bg-white/90 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl hover:-translate-y-0.5 font-medium"
+                >
                   提交答案
                 </button>
               </form>
             ) : (
-              <div className="bg-white/10 rounded-lg p-4 space-y-4">
+              <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-5 space-y-4">
                 <div>
-                  <p className="text-sm opacity-90 mb-1">你的回答：</p>
-                  <p className="font-medium">{dailyData.my_answer.answer}</p>
+                  <p className="text-sm font-medium opacity-80 mb-2">你的回答：</p>
+                  <p className="font-medium bg-white/20 rounded-xl p-4">{dailyData.my_answer.answer}</p>
                 </div>
 
-                {dailyData.partner_answer && (
+                {dailyData.partner_answer ? (
                   <div className="border-t border-white/20 pt-4">
-                    <p className="text-sm opacity-90 mb-1">TA 的回答：</p>
-                    <p className="font-medium">{dailyData.partner_answer.answer}</p>
+                    <p className="text-sm font-medium opacity-80 mb-2">TA 的回答：</p>
+                    <p className="font-medium bg-white/20 rounded-xl p-4">{dailyData.partner_answer.answer}</p>
                   </div>
-                )}
-
-                {!dailyData.partner_answer && (
-                  <p className="text-sm opacity-75">你的 TA 还没有回答哦~</p>
+                ) : (
+                  <div className="flex items-center space-x-2 text-sm opacity-75 bg-white/10 rounded-xl p-3">
+                    <Sparkles className="w-4 h-4" />
+                    <span>你的 TA 还没有回答哦~</span>
+                  </div>
                 )}
               </div>
             )}
-          </>
-        ) : (
-          <p className="text-center py-8 opacity-90">
-            今目的问题正在来的路上...<br/>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white/70 backdrop-blur-glass border border-rose-border rounded-2xl p-12 text-center shadow-glass">
+          <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md animate-float">
+            <Sparkles className="w-8 h-8 text-white" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-800 font-display mb-2">问题生成中</h3>
+          <p className="text-gray-600">
+            每日问题正在来的路上...<br/>
             请明天再来看吧
           </p>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* 历史记录 */}
       {showHistory && (
-        <div className="card animate-fade-in">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-gray-800">历史问答</h3>
+        <div className="bg-white/70 backdrop-blur-glass border border-rose-border rounded-2xl p-6 shadow-glass animate-slide-up">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-lg font-bold text-gray-800 font-display flex items-center">
+              <BookOpen className="w-5 h-5 mr-2 text-primary-500" />
+              历史问答
+            </h3>
             <button
               onClick={() => setShowHistory(false)}
-              className="text-sm text-gray-500"
+              className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
             >
               收起
             </button>
           </div>
 
           {history.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">还没有历史回答</p>
+            <p className="text-gray-500 text-center py-8">还没有历史回答</p>
           ) : (
             <div className="space-y-3 max-h-96 overflow-y-auto">
-              {history.map((item, idx) => (
-                <div 
-                  key={idx}
-                  className="p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className="text-xs px-2 py-1 bg-primary-100 text-primary-700 rounded-full">
-                      {categories[item.category]}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {format(new Date(item.date), 'PP', { locale: zhCN })}
-                    </span>
+              {history.map((item, idx) => {
+                const cat = categories[item.category] || categories.general;
+                return (
+                  <div 
+                    key={idx}
+                    className="p-4 bg-white/50 rounded-xl hover:bg-white/70 transition-all duration-200 cursor-pointer"
+                  >
+                    <div className="flex items-center flex-wrap gap-2 mb-3">
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-bold bg-gradient-to-r ${cat.color} text-white`}>
+                        {cat.label}
+                      </span>
+                      <span className="text-xs text-gray-500 flex items-center">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        {format(new Date(item.date), 'yyyy-MM-dd', { locale: zhCN })}
+                      </span>
+                    </div>
+                    <p className="font-bold text-gray-800 font-display mb-2">{item.question}</p>
+                    {item.my_answer && (
+                      <p className="text-sm text-gray-600 bg-white/60 rounded-lg p-3">
+                        💭 {item.my_answer}
+                      </p>
+                    )}
                   </div>
-                  <p className="font-medium text-gray-800 mb-2">{item.question}</p>
-                  {item.my_answer && (
-                    <p className="text-sm text-gray-600">
-                      💭 {item.my_answer}
-                    </p>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

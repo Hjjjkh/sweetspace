@@ -1,0 +1,6 @@
+# Cloudflare Pages 路由配置
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": []
+}

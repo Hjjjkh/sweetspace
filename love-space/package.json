@@ -1,16 +1,30 @@
-name = "love-space"
-description = "情侣专属私密网站系统"
-version = "1.0.0"
-
-[dev]
-port = 3000
-
-[scripts]
-dev = "concurrently 'npm run dev:worker' 'npm run dev:frontend'"
-dev:worker = "cd worker && npm run dev"
-dev:frontend = "cd frontend && npm run dev"
-build = "npm run build:worker && npm run build:frontend"
-build:worker = "cd worker && npm run deploy"
-build:frontend = "cd frontend && npm run build"
-deploy = "bash scripts/deploy.sh"
-init-db = "cd worker && npm run init-db"
+{
+  "name": "love-space",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Love Space - 情侣专属私密网站系统",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm:dev:*\"",
+    "dev:worker": "cd worker && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:frontend",
+    "build:frontend": "cd frontend && npm run build",
+    "deploy": "npm run deploy:worker && npm run deploy:frontend",
+    "deploy:worker": "cd worker && npm run deploy",
+    "deploy:frontend": "cd frontend && npm run build && npx wrangler pages deploy dist --project-name=love-space",
+    "init-db": "cd worker && npx wrangler d1 execute love-space-db --file=./schema.sql --remote",
+    "preview": "npm run build && wrangler pages dev dist"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "wrangler": "^3.105.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "workspaces": [
+    "frontend",
+    "worker"
+  ]
+}

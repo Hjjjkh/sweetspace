@@ -1,0 +1,78 @@
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      deployments: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Install worker dependencies
+        working-directory: ./worker
+        run: npm ci
+      
+      - name: Build frontend
+        run: npm run build:frontend
+      
+      - name: Deploy Frontend to Pages
+        uses: cloudflare/wrangler-action@v3.13.0
+        with:
+          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: frontend
+          command: pages deploy dist --project-name=love-space --commit-dirty=true
+          preCommands: npm run build:frontend
+      
+      - name: Deploy Worker
+        uses: cloudflare/wrangler-action@v3.13.0
+        with:
+          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          command: deploy
+      
+      - name: Initialize Database (if needed)
+        run: |
+          cd worker
+          npx wrangler d1 execute love-space-db --file=./schema.sql --remote || echo "Database already initialized or error occurred"
+        continue-on-error: true
+        
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Frontend and Worker deployed successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### URLs" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: https://love-space.pages.dev" >> $GITHUB_STEP_SUMMARY
+          echo "- Worker API: https://sweetspace.<your-subdomain>.workers.dev" >> $GITHUB_STEP_SUMMARY
