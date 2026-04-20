@@ -27,7 +27,7 @@ export default function Layout() {
       </div>
 
       {/* 桌面端侧边导航栏 - 固定在左侧 */}
-      <aside className="hidden lg:flex flex-col w-20 fixed left-0 top-0 bottom-0 bg-white/70 backdrop-blur-glass border-r border-rose-border shadow-glass z-50">
+      <aside className="hidden lg:flex flex-col w-20 fixed left-0 top-0 bottom-0 bg-white/70 backdrop-blur-glass border-r border-rose-border shadow-glass z-40">
         <div className="flex-1 flex flex-col items-center py-6 space-y-4">
           {/* Logo */}
           <Link to="/" className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-primary-500 to-pink-500 rounded-xl shadow-lg mb-4 cursor-pointer">
@@ -54,21 +54,12 @@ export default function Layout() {
             );
           })}
         </div>
-
-        {/* 相册快捷入口 */}
-        <Link
-          to="/gallery"
-          className="mb-4 w-12 h-12 flex items-center justify-center bg-gradient-to-br from-accent-400 to-orange-400 rounded-xl shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-          title="相册"
-        >
-          <Image className="w-6 h-6 text-white" />
-        </Link>
       </aside>
 
       {/* 主内容区 */}
       <div className="flex-1 flex flex-col lg:ml-20 min-h-screen">
         {/* 顶部导航栏 */}
-        <header className="sticky top-0 z-40 bg-white/70 backdrop-blur-glass border-b border-rose-border shadow-sm">
+        <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-glass border-b border-rose-border shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* 移动端 Logo */}
@@ -181,7 +172,7 @@ export default function Layout() {
         </main>
 
         {/* 移动端底部导航栏 */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-glass border-t border-rose-border shadow-glass z-40 safe-area-bottom">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-glass border-t border-rose-border shadow-glass z-30 safe-area-bottom">
           <div className="flex justify-around items-center">
             {navItems.slice(0, 5).map((item) => {
               const Icon = item.icon;
@@ -209,14 +200,6 @@ export default function Layout() {
           </div>
         </nav>
       </div>
-
-      {/* 桌面端相册浮动按钮 */}
-      <Link
-        to="/gallery"
-        className="hidden lg:flex fixed right-6 bottom-6 w-14 h-14 bg-gradient-to-br from-accent-400 to-orange-400 rounded-2xl shadow-glass items-center justify-center hover:shadow-floating hover:scale-110 transition-all duration-300 cursor-pointer z-40"
-      >
-        <Image className="w-7 h-7 text-white" />
-      </Link>
     </div>
   );
 }
