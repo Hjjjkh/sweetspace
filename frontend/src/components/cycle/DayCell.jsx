@@ -1,4 +1,4 @@
-import { format, isToday } from 'date-fns';
+import { isToday } from 'date-fns';
 import { Droplet } from 'lucide-react';
 
 const moodEmojis = {
