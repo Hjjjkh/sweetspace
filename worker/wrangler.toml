@@ -6,22 +6,30 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "love-space-db"
-database_id = "YOUR_DATABASE_ID_HERE"
+# database_id 在 Cloudflare Dashboard 配置
 
-# R2 Storage binding (optional - for gallery)
-# [[r2_buckets]]
-# binding = "BUCKET"
-# bucket_name = "love-space-photos"
+# R2 Storage binding (用于相册文件存储)
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "love-space-photos"
+# 如果 bucket 不存在，先创建：npx wrangler r2 bucket create love-space-photos
 
 # Environment variables
 [vars]
 ENVIRONMENT = "production"
+MAX_FILE_SIZE = "10485760"
+ALLOWED_TYPES = "image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime"
 
 # Development configuration
 [dev]
 port = 8787
 local_protocol = "http"
 
-# Cron triggers (for daily questions)
-# [[triggers]]
-# crons = ["0 0 * * *"]
+# 本地开发使用本地 R2 和 D1
+[[dev.d1_databases]]
+binding = "DB"
+database_name = "love-space-db-local"
+
+[[dev.r2_buckets]]
+binding = "BUCKET"
+bucket_name = "love-space-photos-local"

@@ -70,10 +70,12 @@ export default function GalleryPage() {
       if (response.data.success) {
         await fetchPhotos();
         handleClose();
+        alert('上传成功！');
       }
     } catch (error) {
       console.error('Upload error:', error);
-      alert('上传失败，请重试');
+      const errorMsg = error.response?.data?.message || '上传失败，请重试';
+      alert(errorMsg);
     } finally {
       setUploading(false);
     }

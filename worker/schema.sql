@@ -185,8 +185,8 @@ CREATE TABLE IF NOT EXISTS gallery_photos (
   user_id TEXT NOT NULL,
   title TEXT NOT NULL,
   description TEXT DEFAULT '',
-  file_data TEXT NOT NULL,  -- Base64 encoded image data
-  thumbnail_data TEXT,      -- Base64 encoded thumbnail (optional)
+  file_url TEXT NOT NULL,  -- R2 file URL or proxy path  -- Base64 encoded image data
+  
   file_type TEXT NOT NULL,  -- MIME type: image/jpeg, image/png, etc.
   file_size INTEGER NOT NULL,  -- File size in bytes
   taken_at INTEGER,         -- Timestamp when photo was taken

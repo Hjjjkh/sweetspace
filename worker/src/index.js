@@ -16,7 +16,7 @@ import { handleMessages } from './handlers/messages.js';
 import { handleMoods } from './handlers/moods.js';
 import { handleDailyQuestions } from './handlers/daily.js';
 import { handleTasks } from './handlers/tasks.js';
-import { handleUpload, handleGetPhotos, handleDeletePhoto } from './handlers/upload.js';
+import { handleUpload, handleGetPhotos, handleDeletePhoto, handleDownloadFile } from './handlers/upload.js';
 import { handleOverview } from './handlers/overview.js';
 import { handleCron } from './handlers/cron.js';
 import { corsHeaders } from './utils/cors.js';
@@ -101,6 +101,11 @@ export default {
           const photoId = path.split('/').pop();
           return handleDeletePhoto(env, user, photoId);
         }
+      }
+      // 下载/访问 R2 文件 (代理模式)
+      if (path.startsWith('/api/upload/') && request.method === 'GET') {
+        const r2Key = decodeURIComponent(path.replace('/api/upload/', ''));
+        return handleDownloadFile(env, r2Key);
       }
 
       // 关系概览
