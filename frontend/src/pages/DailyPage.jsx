@@ -61,46 +61,6 @@ export default function DailyPage() {
       }
     } catch (error) {
       console.error('Submit answer error:', error);
-      alert('提交失败，请重试');
-    }
-  }
-
-  async function handleGenerateAITopics(category = 'general') {
-    setGeneratingTopic(true);
-    try {
-      const response = await fetch('/api/ai/generate-topic', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          category,
-          relationshipStage: 'stable'
-        })
-      });
-
-      const result = await response.json();
-      if (result.success && result.topics.length > 0) {
-        setGeneratedTopics(result.topics);
-      }
-    } catch (error) {
-      console.error('Generate topic error:', error);
-      alert('AI 生成失败，请稍后重试');
-    } finally {
-      setGeneratingTopic(false);
-    }
-  }
-
-    try {
-      const response = await api.post('/daily/answer', {
-        question_id: dailyData.question.id,
-        answer: answer.trim(),
-        is_visible_to_partner: isVisible
-      });
-
-      if (response.data.success) {
-        await fetchDailyQuestion();
-        setAnswer('');
-      }
-    } catch (error) {
       if (error.response?.status === 409) {
         alert('你已经回答过今天的问题了');
       } else {
@@ -108,6 +68,8 @@ export default function DailyPage() {
       }
     }
   }
+
+  async function handleGenerateAITopics(category = 'general') {
 
   async function loadHistory() {
     try {
