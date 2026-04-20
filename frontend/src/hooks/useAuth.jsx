@@ -3,10 +3,9 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
-// Use environment variable if available, otherwise use relative path (for Pages proxy)
-const API_BASE = import.meta.env.VITE_API_BASE_URL 
-  ? `${import.meta.env.VITE_API_BASE_URL}` 
-  : '/api';
+// API Configuration
+// Use relative path - Cloudflare Pages will proxy to Worker via _redirects
+const API_BASE = '/api';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -62,6 +61,3 @@ export const api = axios.create({
     'Content-Type': 'application/json'
   }
 });
-
-// For cycle API direct access (bypass proxy)
-export const CYCLE_API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';

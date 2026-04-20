@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { format, startOfWeek, addWeeks, subWeeks, isToday } from 'date-fns';
+import { format, startOfWeek, addWeeks, subWeeks } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { Heart, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useAuth, CYCLE_API_BASE } from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth';
 import WeekCalendar from '../components/cycle/WeekCalendar';
 import CycleOverview from '../components/cycle/CycleOverview';
 import CycleSetupModal from '../components/cycle/CycleSetupModal';
@@ -25,11 +25,8 @@ export default function HealthPage() {
   async function fetchWeekData() {
     try {
       const weekStart = format(currentWeek, 'yyyy-MM-dd');
-      const url = `${CYCLE_API_BASE}/cycle/week?week_start=${weekStart}`;
-      console.log('Fetching week data from:', url);
-      const response = await fetch(url);
+      const response = await fetch(`/api/cycle/week?week_start=${weekStart}`);
       const result = await response.json();
-      console.log('Week data result:', result);
       if (result.success) {
         setWeekData(result.data);
         if (!result.data.current_cycle) {
@@ -45,11 +42,8 @@ export default function HealthPage() {
 
   async function fetchOverview() {
     try {
-      const url = `${CYCLE_API_BASE}/cycle/overview`;
-      console.log('Fetching overview from:', url);
-      const response = await fetch(url);
+      const response = await fetch('/api/cycle/overview');
       const result = await response.json();
-      console.log('Overview result:', result);
       if (result.success) {
         setOverview(result.data);
       }
