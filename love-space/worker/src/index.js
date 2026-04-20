@@ -1,0 +1,161 @@
+/**
+ * Love Space Worker - 情侣专属私密网站系统后端
+ * 
+ * 核心功能:
+ * - 用户认证 (双人系统)
+ * - 时间线事件管理
+ * - 留言系统 (支持定时解锁)
+ * - 情绪记录
+ * - 每日互动问答
+ * - Cron 定时任务
+ */
+
+import { handleAuth } from './handlers/auth.js';
+import { handleEvents, handleEventById } from './handlers/events.js';
+import { handleMessages } from './handlers/messages.js';
+import { handleMoods } from './handlers/moods.js';
+import { handleDailyQuestions } from './handlers/daily.js';
+import { handleTasks } from './handlers/tasks.js';
+import { handleUpload } from './handlers/upload.js';
+import { handleOverview } from './handlers/overview.js';
+import { handleCron } from './handlers/cron.js';
+import { corsHeaders } from './utils/cors.js';
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+
+    // CORS Preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    // 获取用户信息 (从 Cloudflare Access JWT)
+    const user = await getUserFromRequest(request, env);
+
+    // 路由处理
+    try {
+      // 健康检查
+      if (path === '/api/health') {
+        return jsonResponse({ status: 'ok', timestamp: Date.now() });
+      }
+
+      // Cron 任务
+      if (path === '/api/cron/daily' && request.method === 'POST') {
+        return handleCron(request, env, ctx);
+      }
+
+      // 认证相关
+      if (path === '/api/auth/me' && request.method === 'GET') {
+        return handleAuth(request, env, user);
+      }
+
+      if (path === '/api/auth/init' && request.method === 'POST') {
+        return handleAuth(request, env, null, ctx);
+      }
+
+      // 事件管理
+      if (path === '/api/events' && request.method === 'GET') {
+        return handleEvents(request, env, user);
+      }
+      if (path === '/api/events' && request.method === 'POST') {
+        return handleEvents(request, env, user, ctx);
+      }
+      if (path.match(/^\/api\/events\/[0-9a-f-]+$/)) {
+        const id = path.split('/').pop();
+        return handleEventById(request, env, user, id, ctx);
+      }
+
+      // 留言系统
+      if (path.startsWith('/api/messages')) {
+        return handleMessages(request, env, user, ctx);
+      }
+
+      // 情绪记录
+      if (path.startsWith('/api/moods')) {
+        return handleMoods(request, env, user, ctx);
+      }
+
+      // 每日互动
+      if (path.startsWith('/api/daily')) {
+        return handleDailyQuestions(request, env, user, ctx);
+      }
+
+      // 任务系统
+      if (path.startsWith('/api/tasks')) {
+        return handleTasks(request, env, user, ctx);
+      }
+
+      // 文件上传
+      if (path === '/api/upload' && request.method === 'POST') {
+        return handleUpload(request, env, user);
+      }
+
+      // 关系概览
+      if (path === '/api/overview' && request.method === 'GET') {
+        return handleOverview(request, env, user);
+      }
+
+      // 404
+      return jsonResponse({ error: 'Not Found' }, { status: 404 });
+
+    } catch (error) {
+      console.error('Worker error:', error);
+      return jsonResponse(
+        { error: 'Internal Server Error', message: error.message },
+        { status: 500 }
+      );
+    }
+  }
+};
+
+/**
+ * 从请求中提取用户信息
+ */
+async function getUserFromRequest(request, env) {
+  // 开发环境：绕过认证
+  if (env.ENVIRONMENT === 'development') {
+    return {
+      id: 'dev-user-1',
+      email: 'dev@example.com',
+      name: 'Developer'
+    };
+  }
+
+  // 生产环境：从 Cloudflare Access JWT 获取
+  const jwtAssertion = request.headers.get('Cf-Access-Jwt-Assertion');
+  
+  if (!jwtAssertion) {
+    return null;
+  }
+
+  try {
+    // 验证 JWT (简化版本，生产环境应完整验证)
+    const payload = JSON.parse(atob(jwtAssertion.split('.')[1]));
+    return {
+      id: payload.sub || payload.email,
+      email: payload.email,
+      name: payload.name || payload.email.split('@')[0]
+    };
+  } catch (e) {
+    console.error('JWT decode error:', e);
+    return null;
+  }
+}
+
+/**
+ * JSON 响应工具函数
+ */
+function jsonResponse(data, options = {}) {
+  return new Response(JSON.stringify(data), {
+    headers: {
+      'Content-Type': 'application/json',
+      ...corsHeaders
+    },
+    status: options.status || 200
+  });
+}
+
+// 导出工具函数供 handlers 使用
+export { jsonResponse, getUserFromRequest };

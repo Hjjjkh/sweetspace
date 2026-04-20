@@ -1,0 +1,16 @@
+name = "love-space"
+description = "情侣专属私密网站系统"
+version = "1.0.0"
+
+[dev]
+port = 3000
+
+[scripts]
+dev = "concurrently 'npm run dev:worker' 'npm run dev:frontend'"
+dev:worker = "cd worker && npm run dev"
+dev:frontend = "cd frontend && npm run dev"
+build = "npm run build:worker && npm run build:frontend"
+build:worker = "cd worker && npm run deploy"
+build:frontend = "cd frontend && npm run build"
+deploy = "bash scripts/deploy.sh"
+init-db = "cd worker && npm run init-db"
