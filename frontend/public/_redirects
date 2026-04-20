@@ -1,5 +1,5 @@
-# Cloudflare Pages _redirects
-# Format: /source /destination :status_code
+# Cloudflare Pages Redirects
+# Format: /source /destination <status code>
 
-# API proxy to Worker (force proxy)
-/api/* https://sweetspace.248851185.workers.dev/api/* :200
+# Proxy API requests to Worker
+/api/* https://sweetspace.248851185.workers.dev/api/* 200
