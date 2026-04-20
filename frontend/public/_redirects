@@ -1,2 +1,5 @@
-# API proxy - Cloudflare Pages will forward to Worker
-/api/* https://sweetspace.248851185.workers.dev/api/:splat 200
+# Cloudflare Pages _redirects
+# Format: /source /destination :status_code
+
+# API proxy to Worker (force proxy)
+/api/* https://sweetspace.248851185.workers.dev/api/* :200
