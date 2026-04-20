@@ -15,6 +15,12 @@ export default function CycleSetupModal({ onComplete, onClose }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    
+    if (formData.period_length >= formData.cycle_length) {
+      alert('经期长度必须小于周期长度');
+      return;
+    }
+    
     setLoading(true);
 
     try {

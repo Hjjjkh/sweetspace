@@ -183,8 +183,8 @@ export default function Layout() {
         </main>
 
         {/* 移动端底部导航栏 */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-glass border-t border-rose-border shadow-glass z-30 safe-area-bottom">
-          <div className="flex justify-around items-center">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-glass border-t border-rose-border shadow-glass z-30 safe-area-bottom overflow-x-auto">
+          <div className="flex justify-around items-center min-w-max px-2">
             {navItems.slice(0, 5).map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -193,7 +193,7 @@ export default function Layout() {
                   key={item.path}
                   to={item.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex flex-col items-center py-3 px-2 flex-1 transition-all duration-200 cursor-pointer ${
+                  className={`flex flex-col items-center py-3 px-3 flex-1 transition-all duration-200 cursor-pointer ${
                     isActive 
                       ? 'text-primary-600' 
                       : 'text-gray-500 hover:text-primary-400'
@@ -208,6 +208,22 @@ export default function Layout() {
                 </Link>
               );
             })}
+            <Link
+              to="/health"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex flex-col items-center py-3 px-3 flex-1 transition-all duration-200 cursor-pointer ${
+                location.pathname === '/health'
+                  ? 'text-primary-600' 
+                  : 'text-gray-500 hover:text-primary-400'
+              }`}
+            >
+              <div className={`p-2 rounded-xl transition-all duration-200 ${
+                location.pathname === '/health' ? 'bg-primary-100' : ''
+              }`}>
+                <Activity className={`w-5 h-5 ${location.pathname === '/health' ? 'stroke-[2.5px]' : ''}`} />
+              </div>
+              <span className="text-xs mt-1 font-medium">健康</span>
+            </Link>
           </div>
         </nav>
       </div>

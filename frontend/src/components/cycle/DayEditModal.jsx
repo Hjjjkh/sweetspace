@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { format } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
 import { X, Droplet, Apple, Coffee, Dumbbell, Check } from 'lucide-react';
 
 const moodOptions = [
@@ -22,6 +23,16 @@ const flowOptions = [
   { value: 'light', label: '少量' },
   { value: 'medium', label: '中等' },
   { value: 'heavy', label: '大量' }
+];
+
+const commonSymptoms = [
+  { value: 'cramps', label: '痛经' },
+  { value: 'headache', label: '头痛' },
+  { value: 'bloating', label: '腹胀' },
+  { value: 'breast_tenderness', label: '乳房胀痛' },
+  { value: 'acne', label: '痘痘' },
+  { value: 'fatigue', label: '疲劳' },
+  { value: 'backache', label: '腰痛' }
 ];
 
 /**
@@ -208,6 +219,32 @@ export default function DayEditModal({ day, onClose, onSave }) {
                     }`}>
                       {checked && <Check className="w-3 h-3 text-white" />}
                     </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 症状选择 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              是否有以下症状？
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {commonSymptoms.map(symptom => {
+                const checked = formData.symptoms.includes(symptom.value);
+                return (
+                  <button
+                    key={symptom.value}
+                    type="button"
+                    onClick={() => toggleSymptom(symptom.value)}
+                    className={`py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer ${
+                      checked
+                        ? 'border-rose-300 bg-rose-50 text-rose-700'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    {symptom.label}
                   </button>
                 );
               })}

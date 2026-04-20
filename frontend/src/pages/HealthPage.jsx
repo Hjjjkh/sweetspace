@@ -8,6 +8,23 @@ import CycleOverview from '../components/cycle/CycleOverview';
 import CycleSetupModal from '../components/cycle/CycleSetupModal';
 import DayEditModal from '../components/cycle/DayEditModal';
 
+const periodLengthOptions = [
+  { value: 'none', label: '无' },
+  { value: 'light', label: '少量' },
+  { value: 'medium', label: '中等' },
+  { value: 'heavy', label: '大量' }
+];
+
+const commonSymptoms = [
+  { value: 'cramps', label: '痛经' },
+  { value: 'headache', label: '头痛' },
+  { value: 'bloating', label: '腹胀' },
+  { value: 'breast_tenderness', label: '乳房胀痛' },
+  { value: 'acne', label: '痘痘' },
+  { value: 'fatigue', label: '疲劳' },
+  { value: 'backache', label: '腰痛' }
+];
+
 const habitIcons = {
   water: Droplet,
   fruit: Apple,
@@ -140,12 +157,12 @@ export default function HealthPage() {
             >
               <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
-            <h3 className="text-lg font-bold text-gray-800">
-              {format(currentWeek, 'yyyy 年 MM 月', { locale: zhCN })} 第{Math.ceil(currentWeek.getDate() / 7)}周
-            </h3>
+          <h3 className="text-lg font-bold text-gray-800">
+            {format(currentWeek, 'yyyy 年 MM 月 dd 日', { locale: zhCN })} - {format(addWeeks(currentWeek, 6), 'MM 月 dd 日')}
+          </h3>
             <button
               onClick={handleNextWeek}
-              disabled={isToday(currentWeek) || addWeeks(currentWeek, -1) < new Date()}
+              disabled={addWeeks(currentWeek, 1) > new Date()}
               className="p-2 hover:bg-white/50 rounded-xl transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <ChevronRight className="w-5 h-5 text-gray-600" />
