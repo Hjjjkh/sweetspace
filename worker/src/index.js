@@ -19,6 +19,7 @@ import { handleTasks } from './handlers/tasks.js';
 import { handleUpload, handleGetPhotos, handleDeletePhoto, handleDownloadFile } from './handlers/upload.js';
 import { handleOverview } from './handlers/overview.js';
 import { handleCron } from './handlers/cron.js';
+import { handleAIRequest } from './handlers/ai.js';
 import { corsHeaders } from './utils/cors.js';
 
 export default {
@@ -111,6 +112,11 @@ export default {
       // 关系概览
       if (path === '/api/overview' && request.method === 'GET') {
         return handleOverview(request, env, user);
+      }
+
+      // AI 功能
+      if (path.startsWith('/api/ai/')) {
+        return handleAIRequest(request, env, user);
       }
 
       // 404

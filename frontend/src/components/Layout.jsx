@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Home, Calendar, Mail, Smile, Sparkles, Image, Heart, Menu, X } from 'lucide-react';
+import { Home, Calendar, Mail, Smile, Sparkles, Image, Heart, Menu, X, Settings } from 'lucide-react';
 
 const navItems = [
   { path: '/', label: '首页', icon: Home },
@@ -160,6 +160,16 @@ export default function Layout() {
                   </Link>
                 );
               })}
+              
+              {/* AI 设置 */}
+              <Link
+                to="/ai-settings"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer text-gray-600 hover:bg-gray-50"
+              >
+                <Settings className="w-5 h-5" />
+                <span className="font-medium">AI 设置</span>
+              </Link>
             </nav>
           </div>
         </div>

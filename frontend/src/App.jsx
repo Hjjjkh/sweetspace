@@ -9,6 +9,7 @@ import MessagesPage from './pages/MessagesPage';
 import MoodsPage from './pages/MoodsPage';
 import DailyPage from './pages/DailyPage';
 import GalleryPage from './pages/GalleryPage';
+import AISettingsPage from './pages/AISettingsPage';
 import Layout from './components/Layout';
 import InitPage from './pages/InitPage';
 
@@ -38,6 +39,7 @@ function AppContent() {
           <Route path="moods" element={<MoodsPage />} />
           <Route path="daily" element={<DailyPage />} />
           <Route path="gallery" element={<GalleryPage />} />
+          <Route path="ai-settings" element={<AISettingsPage />} />
         </Route>
       </Routes>
     </Router>
