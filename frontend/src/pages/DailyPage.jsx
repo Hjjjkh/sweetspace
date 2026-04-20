@@ -261,13 +261,14 @@ export default function DailyPage() {
         </div>
       )}
 
+
       {/* 历史记录 */}
       {showHistory && (
         <div className="bg-white/70 backdrop-blur-glass border border-rose-border rounded-2xl p-6 shadow-glass animate-slide-up">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-gray-800 font-display flex items-center">
               <BookOpen className="w-5 h-5 mr-2 text-primary-500" />
-              历史问答
+              历史回答
             </h3>
             <button
               onClick={() => setShowHistory(false)}
