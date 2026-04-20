@@ -16,7 +16,7 @@ import { handleMessages } from './handlers/messages.js';
 import { handleMoods } from './handlers/moods.js';
 import { handleDailyQuestions } from './handlers/daily.js';
 import { handleTasks } from './handlers/tasks.js';
-import { handleUpload } from './handlers/upload.js';
+import { handleUpload, handleGetPhotos, handleDeletePhoto } from './handlers/upload.js';
 import { handleOverview } from './handlers/overview.js';
 import { handleCron } from './handlers/cron.js';
 import { corsHeaders } from './utils/cors.js';
@@ -89,7 +89,18 @@ export default {
 
       // 文件上传
       if (path === '/api/upload' && request.method === 'POST') {
-        return handleUpload(request, env, user);
+        return handleUpload(request, env, user, ctx);
+      }
+      // 获取照片列表
+      if (path === '/api/upload' && request.method === 'GET') {
+        return handleGetPhotos(env, user);
+      }
+      // 删除照片
+      if (path.match(/^\/api\/upload\/[0-9a-f-]+$/)) {
+        if (request.method === 'DELETE') {
+          const photoId = path.split('/').pop();
+          return handleDeletePhoto(env, user, photoId);
+        }
       }
 
       // 关系概览
