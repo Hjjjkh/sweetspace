@@ -3,7 +3,10 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
-const API_BASE = '/api';
+// Use environment variable if available, otherwise use relative path (for Pages proxy)
+const API_BASE = import.meta.env.VITE_API_BASE_URL 
+  ? `${import.meta.env.VITE_API_BASE_URL}` 
+  : '/api';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -52,10 +55,13 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-// 导出配置好的 axios 实例
+// Export configured axios instance
 export const api = axios.create({
   baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json'
   }
 });
+
+// For cycle API direct access (bypass proxy)
+export const CYCLE_API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
