@@ -3,12 +3,15 @@ import { Link } from 'react-router-dom';
 import { api, useAuth } from '../hooks/useAuth';
 import { format, differenceInDays } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Calendar, Mail, Smile, Flame, Heart, Plus, Camera } from 'lucide-react';
+import { Calendar, Mail, Smile, Flame, Heart, Plus, Camera, Sparkles } from 'lucide-react';
+import AIButton, { AIGeneratedContent } from '../components/AIButton';
 
 export default function HomePage() {
   const { user } = useAuth();
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [weeklyInsight, setWeeklyInsight] = useState(null);
+  const [insightLoading, setInsightLoading] = useState(false);
 
   useEffect(() => {
     fetchOverview();
@@ -24,6 +27,33 @@ export default function HomePage() {
       console.error('Fetch overview error:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleWeeklyInsight() {
+    if (insightLoading) return;
+    
+    setInsightLoading(true);
+    try {
+      const response = await fetch('/api/ai/relationship-insight', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          days: 7,
+          events: [],
+          messages: [],
+          moods: []
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setWeeklyInsight(result.insight);
+      }
+    } catch (error) {
+      console.error('Weekly insight error:', error);
+    } finally {
+      setInsightLoading(false);
     }
   }
 
@@ -181,6 +211,36 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* AI 关系周报 */}
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-6 shadow-glass">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-purple-600" />
+            <h3 className="text-lg font-bold text-gray-800 font-display">本周关系洞察</h3>
+          </div>
+          <AIButton
+            type="insight"
+            label={weeklyInsight ? '重新生成' : '生成周报'}
+            onClick={handleWeeklyInsight}
+            disabled={insightLoading}
+          />
+        </div>
+        
+        {weeklyInsight ? (
+          <AIGeneratedContent
+            content={weeklyInsight}
+            fromCache={false}
+            onDismiss={() => setWeeklyInsight(null)}
+          />
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <Sparkles className="w-12 h-12 mx-auto mb-3 text-purple-400 opacity-50" />
+            <p>点击生成你们的关系周报</p>
+            <p className="text-xs mt-2">AI 会分析最近 7 天的心情、留言和事件，生成温暖的关系洞察</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -20,6 +20,8 @@ export default function DailyPage() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
+  const [generatingTopic, setGeneratingTopic] = useState(false);
+  const [generatedTopics, setGeneratedTopics] = useState([]);
 
   useEffect(() => {
     fetchDailyQuestion();
@@ -45,6 +47,47 @@ export default function DailyPage() {
       alert('请先回答问题');
       return;
     }
+
+    try {
+      const response = await api.post('/daily/answer', {
+        question_id: dailyData.question.id,
+        answer: answer.trim(),
+        is_visible_to_partner: isVisible
+      });
+
+      if (response.data.success) {
+        await fetchDailyQuestion();
+        setAnswer('');
+      }
+    } catch (error) {
+      console.error('Submit answer error:', error);
+      alert('提交失败，请重试');
+    }
+  }
+
+  async function handleGenerateAITopics(category = 'general') {
+    setGeneratingTopic(true);
+    try {
+      const response = await fetch('/api/ai/generate-topic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category,
+          relationshipStage: 'stable'
+        })
+      });
+
+      const result = await response.json();
+      if (result.success && result.topics.length > 0) {
+        setGeneratedTopics(result.topics);
+      }
+    } catch (error) {
+      console.error('Generate topic error:', error);
+      alert('AI 生成失败，请稍后重试');
+    } finally {
+      setGeneratingTopic(false);
+    }
+  }
 
     try {
       const response = await api.post('/daily/answer', {
@@ -95,13 +138,32 @@ export default function DailyPage() {
           <Sparkles className="w-7 h-7 mr-3 text-primary-500" />
           每日互动
         </h2>
-        <button
-          onClick={loadHistory}
-          className="flex items-center space-x-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors cursor-pointer"
-        >
-          <BookOpen className="w-4 h-4" />
-          <span>查看历史</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={loadHistory}
+            className="flex items-center space-x-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors cursor-pointer"
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>查看历史</span>
+          </button>
+          <button
+            onClick={() => handleGenerateAITopics('general')}
+            disabled={generatingTopic}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm
+              bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg
+              hover:from-purple-600 hover:to-pink-600
+              disabled:from-gray-400 disabled:to-gray-500
+              transition-all cursor-pointer shadow-md hover:shadow-lg
+            "
+          >
+            {generatingTopic ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            <span>AI 生成话题</span>
+          </button>
+        </div>
       </div>
 
       {/* 今日问题卡片 */}
@@ -192,6 +254,39 @@ export default function DailyPage() {
             )}
           </div>
         </div>
+
+        {/* AI 生成话题 */}
+        {generatedTopics.length > 0 && (
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                <h3 className="font-bold text-gray-800">AI 生成的话题</h3>
+              </div>
+              <button
+                onClick={() => setGeneratedTopics([])}
+                className="text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="grid gap-3">
+              {generatedTopics.map((topic, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white/70 backdrop-blur-sm border border-purple-100 rounded-xl p-4 hover:shadow-md transition-all cursor-pointer"
+                  onClick={() => {
+                    navigator.clipboard.writeText(topic);
+                    alert('已复制话题');
+                  }}
+                >
+                  <p className="text-gray-800 font-medium">{topic}</p>
+                  <span className="text-xs text-purple-500 mt-2 block">点击复制</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       ) : (
         <div className="bg-white/70 backdrop-blur-glass border border-rose-border rounded-2xl p-12 text-center shadow-glass">
           <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md animate-float">

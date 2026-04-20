@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api, useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Mail, Send, Inbox, Clock, Check, Plus, X, Eye } from 'lucide-react';
+import { Mail, Send, Inbox, Clock, Check, Plus, X, Eye, Sparkles } from 'lucide-react';
 
 export default function MessagesPage() {
   const { user } = useAuth();
@@ -14,6 +14,9 @@ export default function MessagesPage() {
     content: '',
     reveal_at: ''
   });
+  const [polishedVersions, setPolishedVersions] = useState({});
+  const [showPolish, setShowPolish] = useState(false);
+  const [polishLoading, setPolishLoading] = useState(false);
 
   useEffect(() => {
     fetchMessages();
@@ -52,6 +55,42 @@ export default function MessagesPage() {
       console.error('Create message error:', error);
       alert('发送失败，请重试');
     }
+  }
+
+  async function handlePolishMessage() {
+    if (!newMessage.content.trim()) {
+      alert('请先输入留言内容');
+      return;
+    }
+
+    setPolishLoading(true);
+    try {
+      const response = await fetch('/api/ai/polish-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          draft: newMessage.content,
+          styles: ['温馨', '幽默', '深情']
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setPolishedVersions(result.polished);
+        setShowPolish(true);
+      }
+    } catch (error) {
+      console.error('Polish error:', error);
+      alert('AI 润色失败，请稍后重试');
+    } finally {
+      setPolishLoading(false);
+    }
+  }
+
+  function applyPolishedVersion(version, content) {
+    setNewMessage({ ...newMessage, content });
+    setShowPolish(false);
+    setPolishedVersions({});
   }
 
   async function handleRead(messageId) {
@@ -135,7 +174,69 @@ export default function MessagesPage() {
                 onChange={(e) => setNewMessage({...newMessage, content: e.target.value})}
                 placeholder="写下你想对 TA 说的话..."
               />
+              
+              {/* AI 润色按钮 */}
+              <div className="mt-2 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handlePolishMessage}
+                  disabled={!newMessage.content.trim() || polishLoading}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm
+                    bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg
+                    hover:from-purple-600 hover:to-pink-600
+                    disabled:from-gray-400 disabled:to-gray-500
+                    transition-all cursor-pointer shadow-md hover:shadow-lg
+                  "
+                >
+                  {polishLoading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <Sparkles className="w-4 h-4" />
+                  )}
+                  <span>AI 润色</span>
+                </button>
+                <span className="text-xs text-gray-500">提供 3 种不同风格建议</span>
+              </div>
             </div>
+
+            {/* AI 润色结果 */}
+            {showPolish && Object.keys(polishedVersions).length > 0 && (
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-purple-500" />
+                    <span className="text-sm font-medium text-purple-700">AI 润色建议</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPolish(false);
+                      setPolishedVersions({});
+                    }}
+                    className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {Object.entries(polishedVersions).map(([style, content]) => (
+                    <div key={style} className="bg-white/70 rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-purple-600">{style}版本</span>
+                        <button
+                          type="button"
+                          onClick={() => applyPolishedVersion(style, content)}
+                          className="text-xs px-2 py-1 bg-purple-500 text-white rounded hover:bg-purple-600 cursor-pointer"
+                        >
+                          使用此版本
+                        </button>
+                      </div>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{content}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center">

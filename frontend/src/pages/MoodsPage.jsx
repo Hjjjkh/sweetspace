@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { api, useAuth } from '../hooks/useAuth';
 import { format, eachDayOfInterval, subDays } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Smile, Heart, Zap, Minus, Coffee, Frown, AlertCircle, TrendingUp } from 'lucide-react';
+import { Smile, Heart, Zap, Minus, Coffee, Frown, AlertCircle, TrendingUp, Sparkles } from 'lucide-react';
+import AIButton, { AIGeneratedContent } from '../components/AIButton';
 import {
   LineChart,
   Line,
@@ -32,6 +33,8 @@ export default function MoodsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedMood, setSelectedMood] = useState(null);
   const [note, setNote] = useState('');
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     fetchMoods();
@@ -97,6 +100,37 @@ export default function MoodsPage() {
     }
   }
 
+  async function handleAiAnalysis() {
+    setAiLoading(true);
+    try {
+      const moodData = moods.map(m => ({
+        date: m.record_date,
+        type: m.mood_type,
+        score: m.mood_score,
+        note: m.note
+      }));
+
+      const response = await fetch('/api/ai/analyze-mood', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          days: 30,
+          moodData
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setAiAnalysis(result.analysis);
+      }
+    } catch (error) {
+      console.error('AI analysis error:', error);
+      alert('AI 分析失败，请稍后重试');
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
   function getMoodColor(type) {
     return moodOptions.find(m => m.type === type)?.color || 'from-gray-400 to-gray-500';
   }
@@ -108,6 +142,12 @@ export default function MoodsPage() {
           <TrendingUp className="w-7 h-7 mr-3 text-primary-500" />
           心情日记
         </h2>
+        <AIButton
+          type="analyze"
+          label="AI 情感分析"
+          disabled={moods.length === 0 || aiLoading}
+          onClick={handleAiAnalysis}
+        />
       </div>
 
       {/* 今日心情记录 */}
@@ -223,6 +263,15 @@ export default function MoodsPage() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+        )}
+
+        {/* AI 情感分析结果 */}
+        {aiAnalysis && (
+          <AIGeneratedContent
+            content={aiAnalysis}
+            fromCache={false}
+            onDismiss={() => setAiAnalysis(null)}
+          />
         )}
       </div>
 

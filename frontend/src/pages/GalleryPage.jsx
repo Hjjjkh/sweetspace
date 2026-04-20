@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api, useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Image, Plus, X, Download, Trash2, Heart, Calendar, User } from 'lucide-react';
+import { Image, Plus, X, Download, Trash2, Heart, Calendar, User, Sparkles } from 'lucide-react';
 
 export default function GalleryPage() {
   const { user } = useAuth();
@@ -17,6 +17,9 @@ export default function GalleryPage() {
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiGenerated, setAiGenerated] = useState({ description: '', tags: [], poem: '' });
+  const [currentPhotoId, setCurrentPhotoId] = useState(null);
 
   useEffect(() => {
     fetchPhotos();
@@ -68,9 +71,16 @@ export default function GalleryPage() {
       });
 
       if (response.data.success) {
+        const photo = response.data.data.photo;
         await fetchPhotos();
         handleClose();
-        alert('上传成功！');
+        
+        // 询问是否使用 AI 生成描述
+        if (window.confirm('是否使用 AI 为这张照片生成描述和标签？')) {
+          handleAiGenerate(photo.id, photo.file_url);
+        } else {
+          alert('上传成功！');
+        }
       }
     } catch (error) {
       console.error('Upload error:', error);
@@ -78,6 +88,44 @@ export default function GalleryPage() {
       alert(errorMsg);
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleAiGenerate(photoId, filename) {
+    setAiGenerating(true);
+    setCurrentPhotoId(photoId);
+    try {
+      const response = await fetch('/api/ai/generate-photo-desc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename,
+          existingTags: []
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setAiGenerated({
+          description: result.description,
+          tags: result.tags,
+          poem: result.poem
+        });
+        
+        // 自动保存到照片
+        await api.patch(`/upload/${photoId}`, {
+          ai_description: result.description,
+          ai_tags: JSON.stringify(result.tags),
+          ai_poem: result.poem
+        });
+        
+        alert('AI 生成成功！已保存到照片。');
+      }
+    } catch (error) {
+      console.error('AI generate error:', error);
+      alert('AI 生成失败，请稍后重试');
+    } finally {
+      setAiGenerating(false);
     }
   }
 
@@ -309,6 +357,36 @@ export default function GalleryPage() {
                   disabled={uploading}
                 />
               </div>
+
+              {/* AI 生成内容 */}
+              {aiGenerated.description && currentPhotoId && (
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-purple-500" />
+                    <span className="text-xs font-medium text-purple-700">AI 生成内容</span>
+                    {aiGenerating && (
+                      <div className="w-3 h-3 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                    )}
+                  </div>
+                  {aiGenerated.description && (
+                    <p className="text-sm text-gray-800 mb-3">{aiGenerated.description}</p>
+                  )}
+                  {aiGenerated.tags && aiGenerated.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {aiGenerated.tags.map((tag, idx) => (
+                        <span key={idx} className="px-2 py-1 bg-white/70 text-purple-600 text-xs rounded-full">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {aiGenerated.poem && (
+                    <p className="text-xs text-purple-600 italic whitespace-pre-line border-t border-purple-200 pt-3">
+                      {aiGenerated.poem}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* 提交按钮 */}
               <button
