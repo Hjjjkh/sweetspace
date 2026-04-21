@@ -213,7 +213,10 @@ async function handleTopicGeneration(request, env, user) {
     const prompt = getTopicGenerationPrompt(category, relationshipStage);
     console.log('Prompt generated, calling AI service...');
     
-    const result = await aiService.getResponse('topic', prompt);
+    // 话题生成不使用缓存（每次都生成新内容）
+    const result = await aiService.callAI([
+      { role: 'user', content: prompt }
+    ], 800, 0.9); // 增加 max_tokens 和 temperature 提高多样性
 
     console.log('AI response received, full content:', JSON.stringify(result.content));
     console.log('AI response content type:', typeof result.content);
@@ -227,7 +230,7 @@ async function handleTopicGeneration(request, env, user) {
       success: true,
       data: {
         topics: topics,
-        fromCache: result.fromCache
+        fromCache: false // 话题生成不使用缓存
       }
     }), {
       headers: { 

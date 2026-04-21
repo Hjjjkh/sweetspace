@@ -100,11 +100,11 @@ export function getDatePlanningPrompt(preferences, occasion, budget, duration) {
 // Topic Generation Prompt
 export function getTopicGenerationPrompt(category, relationshipStage) {
   const categoryDescriptions = {
-    general: '日常话题',
-    deep: '深度交流',
-    fun: '轻松有趣',
-    memory: '回忆往事',
-    future: '未来规划'
+    general: '日常话题，关注当下的感受和想法',
+    deep: '深度交流，探索内心和关系本质',
+    fun: '轻松有趣，发现生活中的小美好',
+    memory: '回忆往事，重温共同经历的美好',
+    future: '未来规划，共同憧憬和计划'
   };
 
   const stageDescriptions = {
@@ -114,18 +114,24 @@ export function getTopicGenerationPrompt(category, relationshipStage) {
     married: '婚姻期（已婚）'
   };
 
+  // 添加随机种子，确保每次生成不同的 prompt
+  const randomSeed = Math.floor(Math.random() * 1000000);
+
   return `你是一对情侣的对话启动器。请为${stageDescriptions[relationshipStage] || '稳定期'}的情侣生成${categoryDescriptions[category] || '日常话题'}。
 
-请生成 10 个话题问题，要求：
+请生成 8-10 个话题问题，要求：
 1. 问题要开放，能引发深入交流
 2. 避免是非题
 3. 贴近${category}分类
 4. 适合${relationshipStage}阶段
+5. 每个问题都应该是独特的，之前没有出现过
 
 格式：
 每个问题一行，以"• "开头
 
-用中文生成问题。`;
+用中文生成问题。
+
+随机种子：${randomSeed}`;
 }
 
 // Relationship Insight Prompt
