@@ -179,7 +179,10 @@ async function handleTopicGeneration(request, env, user) {
   }
 
   try {
-    const { category = 'general', relationshipStage = 'stable' } = await request.json();
+    const body = await request.json();
+    console.log('handleTopicGeneration body:', body);
+    
+    const { category = 'general', relationshipStage = 'stable' } = body || {};
 
     console.log('AI Topic Generation:', { category, relationshipStage });
 
@@ -201,11 +204,16 @@ async function handleTopicGeneration(request, env, user) {
     const result = await aiService.getResponse('topic', prompt);
 
     console.log('AI topics generated:', result.content);
+    
+    const topics = parseTopics(result.content);
+    console.log('Parsed topics:', topics);
 
     return new Response(JSON.stringify({
       success: true,
-      topics: parseTopics(result.content),
-      fromCache: result.fromCache
+      data: {
+        topics: topics,
+        fromCache: result.fromCache
+      }
     }), {
       headers: { 
         'Content-Type': 'application/json',
@@ -216,6 +224,7 @@ async function handleTopicGeneration(request, env, user) {
   } catch (error) {
     console.error('Topic Generation Error:', error);
     return new Response(JSON.stringify({
+      success: false,
       error: error.message,
       type: 'ai_error'
     }), {
