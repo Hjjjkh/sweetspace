@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
@@ -31,7 +31,8 @@ jobs:
       - name: Initialize Database
         run: |
           cd worker
-          npx wrangler d1 execute love-space-db --file=./schema.sql --remote
+          npx wrangler d1 execute love-space-db --file=./migrations/cycle-health.sql --remote
+        continue-on-error: true
         
       - name: Database Init Summary
         run: |
