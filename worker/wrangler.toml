@@ -12,7 +12,7 @@ database_id = "0b02e937-7109-4369-aa59-a2a2e8545608"
 [[r2_buckets]]
 binding = "BUCKET"
 bucket_name = "love-space-photos"
-bucket_id = "请填写 R2 bucket ID（如果没有先创建）"
+# bucket_id 将在 Dashboard 自动获取
 
 # Environment variables
 [vars]
