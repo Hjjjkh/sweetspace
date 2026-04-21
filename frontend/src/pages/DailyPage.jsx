@@ -22,6 +22,9 @@ export default function DailyPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [generatingTopic, setGeneratingTopic] = useState(false);
   const [generatedTopics, setGeneratedTopics] = useState([]);
+  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [showTopicReply, setShowTopicReply] = useState(false);
+  const [replyAnswer, setReplyAnswer] = useState('');
 
   useEffect(() => {
     fetchDailyQuestion();
@@ -82,6 +85,8 @@ export default function DailyPage() {
       if (response.data.success) {
         console.log('[DailyPage] Topics generated:', response.data.data.topics);
         setGeneratedTopics(response.data.data.topics);
+        // 强制刷新页面状态
+        await fetchDailyQuestion();
       } else {
         console.error('[DailyPage] API returned success=false:', response.data);
         alert(response.data.error || 'AI 话题生成失败');
@@ -103,6 +108,57 @@ export default function DailyPage() {
       }
     } finally {
       setGeneratingTopic(false);
+    }
+  }
+
+  async function handleTopicSelect(topic) {
+    setSelectedTopic(topic);
+    setShowTopicReply(true);
+    setReplyAnswer('');
+  }
+
+  async function handleTopicReplySubmit(e) {
+    e.preventDefault();
+    
+    if (!replyAnswer.trim()) {
+      alert('请先写下你的想法');
+      return;
+    }
+
+    try {
+      // 如果有当日问题，使用问题的 API；否则创建一条特殊消息
+      if (dailyData?.question) {
+        const response = await api.post('/daily/answer', {
+          question_id: dailyData.question.id,
+          answer: `[话题讨论] ${selectedTopic}\n\n${replyAnswer.trim()}`,
+          is_visible_to_partner: true
+        });
+        
+        if (response.data.success) {
+          alert('已分享给 TA！💕');
+          setShowTopicReply(false);
+          setSelectedTopic(null);
+          setReplyAnswer('');
+          await fetchDailyQuestion();
+        }
+      } else {
+        // 如果没有当日问题，创建一条留言
+        const response = await api.post('/messages', {
+          content: `💭 话题讨论：${selectedTopic}\n\n${replyAnswer.trim()}`,
+          unlock_at: new Date().toISOString(),
+          is_visible_to_partner: true
+        });
+        
+        if (response.data.success) {
+          alert('已分享给 TA！💕');
+          setShowTopicReply(false);
+          setSelectedTopic(null);
+          setReplyAnswer('');
+        }
+      }
+    } catch (error) {
+      console.error('Submit topic reply error:', error);
+      alert('提交失败，请重试');
     }
   }
 
@@ -283,15 +339,119 @@ export default function DailyPage() {
             {generatedTopics.map((topic, idx) => (
               <div
                 key={idx}
-                className="bg-white/20 rounded-lg p-3 hover:bg-white/30 transition-all cursor-pointer"
-                onClick={() => {
-                  navigator.clipboard.writeText(topic);
-                  alert('已复制话题');
-                }}
+                className="bg-white/20 rounded-lg p-4 hover:bg-white/30 transition-all cursor-pointer group"
               >
-                <p className="text-white text-sm">{topic}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-white text-sm flex-1">{topic}</p>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTopicSelect(topic);
+                    }}
+                    className="flex-shrink-0 px-3 py-1.5 bg-white/30 hover:bg-white/40 text-white text-xs font-medium rounded-lg transition-all cursor-pointer"
+                  >
+                    💬 分享
+                  </button>
+                </div>
+                <div className="flex items-center gap-3 mt-3">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(topic);
+                      alert('已复制话题');
+                    }}
+                    className="text-white/70 hover:text-white text-xs cursor-pointer flex items-center gap-1 transition-colors"
+                  >
+                    📋 复制
+                  </button>
+                  <span className="text-white/40 text-xs">·</span>
+                  <span className="text-white/60 text-xs">点击"分享"写下想法并发送给 TA</span>
+                </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* 话题回复弹窗 */}
+      {showTopicReply && selectedTopic && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-scale-up">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-pink-500" />
+                分享话题给 TA
+              </h3>
+              <button
+                onClick={() => setShowTopicReply(false)}
+                className="text-gray-400 hover:text-gray-600 cursor-pointer cursor-pointer"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="mb-4 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-pink-100">
+              <p className="text-sm font-medium text-gray-700 leading-relaxed">
+                {selectedTopic}
+              </p>
+            </div>
+
+            <form onSubmit={handleTopicReplySubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  你的想法
+                </label>
+                <textarea
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-300 focus:ring-2 focus:ring-pink-100 outline-none resize-none transition-all"
+                  rows="5"
+                  value={replyAnswer}
+                  onChange={(e) => setReplyAnswer(e.target.value)}
+                  placeholder="写下你的想法和感受，然后点击"分享给 TA"...
+                  autoFocus
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-gray-500">
+                    {replyAnswer.length} 字
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    分享给 TA 后可在留言板查看
+                  </span>
+                </div>
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={true}
+                    disabled
+                    className="sr-only peer"
+                  />
+                  <div className="w-5 h-5 bg-pink-100 rounded border border-pink-300 peer-checked:bg-pink-500 peer-checked:border-pink-500 transition-all duration-200 flex items-center justify-center">
+                    <Check className="w-3.5 h-3.5 text-pink-500 peer-checked:text-white" strokeWidth={3} />
+                  </div>
+                </div>
+                <span className="text-sm text-gray-600">
+                  让 TA 看到我的分享
+                </span>
+              </label>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowTopicReply(false)}
+                  className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-all cursor-pointer"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  disabled={!replyAnswer.trim()}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl font-bold hover:from-pink-600 hover:to-rose-600 disabled:from-gray-300 disabled:to-gray-400 transition-all cursor-pointer shadow-md hover:shadow-lg cursor-pointer"
+                >
+                  💕 分享给 TA
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
