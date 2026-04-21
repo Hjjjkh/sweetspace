@@ -78,7 +78,6 @@ export default function DailyPage() {
       });
       if (response.data.success) {
         setGeneratedTopics(response.data.data.topics);
-        // 如果没有当日问题，不强制刷新，让话题卡片保持显示
       } else {
         alert(response.data.error || 'AI 话题生成失败');
       }
@@ -121,7 +120,6 @@ export default function DailyPage() {
           setShowTopicReply(false);
           setSelectedTopic(null);
           setReplyAnswer('');
-          await fetchDailyQuestion();
         }
       } else {
         const response = await api.post('/messages', {
@@ -204,7 +202,7 @@ export default function DailyPage() {
         </div>
       </div>
 
-      {/* AI 生成话题 - 提升优先级，放在最前面 */}
+      {/* AI 生成话题 */}
       {generatedTopics.length > 0 && (
         <div className={`bg-white rounded-3xl p-8 border border-pink-100 ${floatingShadow}`}>
           <div className="flex items-center justify-between mb-6">
@@ -260,7 +258,7 @@ export default function DailyPage() {
         </div>
       )}
 
-      {/* 今日问题卡片 */}
+      {/* 今日问题 或 提示卡片 */}
       {dailyData?.question ? (
         <div className="relative overflow-hidden bg-gradient-to-br from-pink-500 via-pink-400 to-rose-400 rounded-3xl p-8 text-white floatingShadow">
           {/* 装饰背景 */}
@@ -357,8 +355,7 @@ export default function DailyPage() {
             )}
           </div>
         </div>
-      {/* 提示卡片 - 当没有当日问题时显示 */}
-      {!dailyData?.question && generatedTopics.length === 0 && (
+      ) : (
         <div className="bg-white/80 backdrop-blur-md border border-pink-100 rounded-3xl p-10 text-center shadow-xl">
           <div className="w-20 h-20 bg-gradient-to-br from-pink-400 to-rose-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg animate-float">
             <Sparkles className="w-10 h-10 text-white" />
@@ -375,62 +372,6 @@ export default function DailyPage() {
             <Sparkles className="w-5 h-5" />
             生成 AI 话题
           </button>
-        </div>
-      )}
-
-      {/* AI 生成话题 */}
-      {generatedTopics.length > 0 && (
-        <div className={`bg-white rounded-3xl p-8 border border-pink-100 ${floatingShadow}`}>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center shadow-md">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 font-display">AI 生成的话题</h3>
-            </div>
-            <button
-              onClick={() => setGeneratedTopics([])}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all cursor-pointer cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          <div className="grid gap-4">
-            {generatedTopics.map((topic, idx) => (
-              <div
-                key={idx}
-                className={`group bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-5 hover:from-pink-100 hover:to-rose-100 transition-all duration-300 cursor-pointer border border-pink-100 ${hoverShadow}`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <p className="text-gray-700 leading-relaxed flex-1">{topic}</p>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleTopicSelect(topic);
-                    }}
-                    className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-pink-500 text-pink-600 hover:text-white text-sm font-medium rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md border border-pink-100 hover:border-pink-500"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>分享</span>
-                  </button>
-                </div>
-                <div className="flex items-center gap-4 mt-3.5">
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(topic);
-                      alert('已复制话题');
-                    }}
-                    className="text-pink-500 hover:text-pink-700 text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-colors"
-                  >
-                    📋 复制
-                  </button>
-                  <span className="text-pink-300">·</span>
-                  <span className="text-gray-500 text-xs">点击"分享"写下想法并发送给 TA</span>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
@@ -470,7 +411,7 @@ export default function DailyPage() {
                   rows="5"
                   value={replyAnswer}
                   onChange={(e) => setReplyAnswer(e.target.value)}
-                  placeholder="写下你的想法和感受，然后点击"分享给 TA"...
+                  placeholder={'写下你的想法和感受，然后点击"分享给 TA"...'}
                   autoFocus
                 />
                 <div className="flex items-center justify-between mt-2.5">
