@@ -193,7 +193,7 @@ async function handleTopicGeneration(request, env, user) {
         error: 'AI service not configured. Please set OPENROUTER_API_KEY in Cloudflare Secrets.'
       }), {
         status: 503,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
       });
     }
 
@@ -202,17 +202,27 @@ async function handleTopicGeneration(request, env, user) {
 
     console.log('AI topics generated:', result.content);
 
-  return new Response(JSON.stringify({
-    success: true,
-    topics: parseTopics(result.content),
-    fromCache: result.fromCache
-  }), {
-    headers: { 
-      'Content-Type': 'application/json',
-      ...corsHeaders
-    }
-  });
-}
+    return new Response(JSON.stringify({
+      success: true,
+      topics: parseTopics(result.content),
+      fromCache: result.fromCache
+    }), {
+      headers: { 
+        'Content-Type': 'application/json',
+        ...corsHeaders
+      }
+    });
+
+  } catch (error) {
+    console.error('Topic Generation Error:', error);
+    return new Response(JSON.stringify({
+      error: error.message,
+      type: 'ai_error'
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  }
 }
 
 // Relationship Insight Handler
