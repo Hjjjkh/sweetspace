@@ -31,10 +31,45 @@ jobs:
         working-directory: ./worker
         run: npm ci
       
-      - name: Deploy Worker with wrangler
+      - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: worker
           packageManager: npm
+      
+      - name: Apply D1 Binding
+        run: |
+          curl -X PUT \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/services/sweetspace/bindings/DB" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "type": "d1",
+              "name": "DB",
+              "database_id": "0b02e937-7109-4369-aa59-a2a2e8545608"
+            }'
+          echo "✅ D1 binding applied"
+      
+      - name: Apply R2 Binding
+        run: |
+          curl -X PUT \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/services/sweetspace/bindings/BUCKET" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "type": "r2_bucket",
+              "name": "BUCKET",
+              "bucket_name": "love-space-media"
+            }'
+          echo "✅ R2 binding applied"
+      
+      - name: Restart Worker
+        run: |
+          curl -X POST \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/services/sweetspace/subdomain" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{"enabled": true}'
+          echo "✅ Worker restarted"
