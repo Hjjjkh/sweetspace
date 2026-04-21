@@ -14,22 +14,27 @@ export class AIService {
 
   // Check if AI is enabled
   isEnabled() {
-    return !!this.apiKey && this.apiKey.startsWith('sk-or-');
+    return !!this.apiKey;
   }
 
   // Get user's AI usage today
   async getTodayUsage() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStart = Math.floor(today.getTime() / 1000);
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStart = Math.floor(today.getTime() / 1000);
 
-    const result = await this.env.DB.prepare(
-      'SELECT COUNT(*) as count FROM ai_usage_log WHERE user_id = ? AND created_at >= ?'
-    )
-      .bind(this.user.id, todayStart)
-      .first();
+      const result = await this.env.DB.prepare(
+        'SELECT COUNT(*) as count FROM ai_usage_log WHERE user_id = ? AND created_at >= ?'
+      )
+        .bind(this.user.id, todayStart)
+        .first();
 
-    return result.count || 0;
+      return result.count || 0;
+    } catch (e) {
+      console.log('AI usage log table may not exist:', e.message);
+      return 0;
+    }
   }
 
   // Check rate limit
@@ -44,20 +49,24 @@ export class AIService {
 
   // Get cached response
   async getCachedResponse(requestType, content) {
-    const requestHash = await this.md5(`${requestType}:${content}`);
+    try {
+      const requestHash = await this.md5(`${requestType}:${content}`);
 
-    const cached = await this.env.DB.prepare(
-      'SELECT response_content, metadata FROM ai_responses WHERE request_hash = ? AND expires_at > ? AND user_id = ?'
-    )
-      .bind(requestHash, Math.floor(Date.now() / 1000), this.user.id)
-      .first();
+      const cached = await this.env.DB.prepare(
+        'SELECT response_content, metadata FROM ai_responses WHERE request_hash = ? AND expires_at > ? AND user_id = ?'
+      )
+        .bind(requestHash, Math.floor(Date.now() / 1000), this.user.id)
+        .first();
 
-    if (cached) {
-      return {
-        content: cached.response_content,
-        metadata: cached.metadata ? JSON.parse(cached.metadata) : null,
-        fromCache: true
-      };
+      if (cached) {
+        return {
+          content: cached.response_content,
+          metadata: cached.metadata ? JSON.parse(cached.metadata) : null,
+          fromCache: true
+        };
+      }
+    } catch (e) {
+      console.log('AI cache table may not exist:', e.message);
     }
 
     return null;
@@ -65,40 +74,48 @@ export class AIService {
 
   // Cache AI response
   async cacheResponse(requestType, content, response, metadata = null) {
-    const id = crypto.randomUUID();
-    const requestHash = await this.md5(`${requestType}:${content}`);
-    const now = Math.floor(Date.now() / 1000);
-    const expiresAt = now + (this.cacheDays * 24 * 60 * 60);
+    try {
+      const id = crypto.randomUUID();
+      const requestHash = await this.md5(`${requestType}:${content}`);
+      const now = Math.floor(Date.now() / 1000);
+      const expiresAt = now + (this.cacheDays * 24 * 60 * 60);
 
-    await this.env.DB.prepare(
-      `INSERT INTO ai_responses (id, user_id, request_type, request_hash, response_content, metadata, created_at, expires_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-      .bind(
-        id,
-        this.user.id,
-        requestType,
-        requestHash,
-        response,
-        metadata ? JSON.stringify(metadata) : null,
-        now,
-        expiresAt
+      await this.env.DB.prepare(
+        `INSERT INTO ai_responses (id, user_id, request_type, request_hash, response_content, metadata, created_at, expires_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .run();
+        .bind(
+          id,
+          this.user.id,
+          requestType,
+          requestHash,
+          response,
+          metadata ? JSON.stringify(metadata) : null,
+          now,
+          expiresAt
+        )
+        .run();
 
-    return id;
+      return id;
+    } catch (e) {
+      console.log('Failed to cache AI response:', e.message);
+    }
   }
 
   // Log AI usage
   async logUsage(requestType, tokensUsed = null) {
-    const id = crypto.randomUUID();
-    const now = Math.floor(Date.now() / 1000);
+    try {
+      const id = crypto.randomUUID();
+      const now = Math.floor(Date.now() / 1000);
 
-    await this.env.DB.prepare(
-      'INSERT INTO ai_usage_log (id, user_id, request_type, tokens_used, created_at) VALUES (?, ?, ?, ?, ?)'
-    )
-      .bind(id, this.user.id, requestType, tokensUsed, now)
-      .run();
+      await this.env.DB.prepare(
+        'INSERT INTO ai_usage_log (id, user_id, request_type, tokens_used, created_at) VALUES (?, ?, ?, ?, ?)'
+      )
+        .bind(id, this.user.id, requestType, tokensUsed, now)
+        .run();
+    } catch (e) {
+      console.log('Failed to log AI usage:', e.message);
+    }
   }
 
   // Call OpenRouter API
