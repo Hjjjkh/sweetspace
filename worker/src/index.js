@@ -38,6 +38,48 @@ export default {
 
     // 路由处理
     try {
+      // 根路径 - 显示系统状态
+      if (path === '/') {
+        return new Response(`
+<!DOCTYPE html>
+<html>
+<head><title>Love Space Worker Status</title></head>
+<body style="font-family: monospace; padding: 20px;">
+  <h1>🚀 Love Space Worker</h1>
+  <p>Worker 正常运行！</p>
+  
+  <h2>测试接口</h2>
+  <ul>
+    <li><a href="/api/health">/api/health</a> - 健康检查</li>
+    <li><a href="/api/test-db">/api/test-db</a> - 测试数据库</li>
+    <li><a href="/api/test-ai">/api/test-ai</a> - 测试 AI 配置</li>
+  </ul>
+  
+  <h2>前端地址</h2>
+  <p><a href="https://sweetspace.pages.dev">https://sweetspace.pages.dev</a></p>
+</body>
+</html>`, {
+          headers: { 'Content-Type': 'text/html' }
+        });
+      }
+
+      // API 文档
+      if (path === '/api') {
+        return jsonResponse({
+          name: 'Love Space API',
+          version: '2.0.0',
+          endpoints: {
+            'GET /api/health': '健康检查',
+            'GET /api/test-db': '测试数据库连接',
+            'GET /api/test-ai': '测试 AI 配置',
+            'POST /api/auth/init': '初始化用户',
+            'GET /api/auth/me': '获取当前用户',
+            'POST /api/ai/generate-topic': 'AI 生成话题',
+            // ... 其他端点
+          }
+        });
+      }
+
       // 健康检查
       if (path === '/api/health') {
         return jsonResponse({ status: 'ok', timestamp: Date.now() });
@@ -46,10 +88,37 @@ export default {
       // 测试接口：验证 D1 连接
       if (path === '/api/test-db') {
         try {
+          console.log('Testing D1 database connection...');
           const result = await env.DB.prepare('SELECT 1 as test').first();
-          return jsonResponse({ success: true, result });
+          console.log('D1 test result:', result);
+          
+          // 检查用户表
+          const userCount = await env.DB.prepare('SELECT COUNT(*) as count FROM users').first();
+          
+          // 检查 AI 表
+          let aiTableExists = false;
+          try {
+            await env.DB.prepare('SELECT COUNT(*) as count FROM ai_responses LIMIT 1').first();
+            aiTableExists = true;
+          } catch (e) {
+            aiTableExists = false;
+          }
+          
+          return jsonResponse({ 
+            success: true, 
+            result,
+            database: {
+              users_count: userCount?.count || 0,
+              ai_tables_exist: aiTableExists
+            }
+          });
         } catch (e) {
-          return jsonResponse({ success: false, error: e.message }, { status: 500 });
+          console.error('D1 test failed:', e);
+          return jsonResponse({ 
+            success: false, 
+            error: e.message,
+            stack: e.stack 
+          }, { status: 500 });
         }
       }
 
@@ -57,11 +126,57 @@ export default {
       if (path === '/api/test-ai') {
         const hasKey = !!env.OPENROUTER_API_KEY;
         const keyPreview = hasKey ? env.OPENROUTER_API_KEY.substring(0, 10) + '***' : 'none';
+        const keyLength = env.OPENROUTER_API_KEY?.length || 0;
+        
         return jsonResponse({ 
           hasKey, 
           keyPreview,
-          model: env.AI_MODEL 
+          keyLength,
+          model: env.AI_MODEL,
+          env_vars: {
+            AI_MODEL: env.AI_MODEL,
+            AI_RATE_LIMIT: env.AI_RATE_LIMIT,
+            AI_CACHE_DAYS: env.AI_CACHE_DAYS,
+            AI_TIMEOUT_MS: env.AI_TIMEOUT_MS,
+            ENVIRONMENT: env.ENVIRONMENT
+          }
         });
+      }
+
+      // 测试接口：实际调用 AI
+      if (path === '/api/test-ai-call') {
+        try {
+          const { AIService } = await import('./services/ai.js');
+          const testUser = { id: 'test-user', email: 'test@test.com', name: 'Test' };
+          const aiService = new AIService(env, testUser);
+          
+          console.log('AI Service created, enabled:', aiService.isEnabled());
+          
+          if (!aiService.isEnabled()) {
+            return jsonResponse({ 
+              success: false, 
+              error: 'AI not enabled - missing API key' 
+            }, { status: 503 });
+          }
+          
+          // 简单测试调用
+          const result = await aiService.callAI([
+            { role: 'user', content: 'Say "Hello" in Chinese' }
+          ]);
+          
+          return jsonResponse({
+            success: true,
+            response: result.content,
+            model: result.model
+          });
+        } catch (e) {
+          console.error('AI test call failed:', e);
+          return jsonResponse({
+            success: false,
+            error: e.message,
+            stack: e.stack
+          }, { status: 500 });
+        }
       }
 
       // Cron 任务
