@@ -47,16 +47,24 @@ export async function handleAIRequest(request, env, user) {
       case 'clear-cache':
         return await handleClearCache(request, env, user);
       default:
-        return new Response('Not Found', { status: 404 });
+        return new Response('Not Found', { 
+          status: 404,
+          headers: corsHeaders
+        });
     }
   } catch (error) {
     console.error('AI Handler Error:', error);
+    console.error('Error stack:', error.stack);
     return new Response(JSON.stringify({
       error: error.message,
+      stack: error.stack,
       type: 'ai_error'
     }), {
       status: error.message.includes('rate limit') ? 429 : 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 
+        'Content-Type': 'application/json',
+        ...corsHeaders 
+      }
     });
   }
 }
@@ -188,9 +196,10 @@ async function handleTopicGeneration(request, env, user) {
 
     const aiService = new AIService(env, user);
     
+    console.log('AI Service created, checking if enabled...');
     // Check if AI is enabled
     if (!aiService.isEnabled()) {
-      console.error('AI service not enabled - missing API key');
+      console.error('AI service not enabled - API Key:', env.OPENROUTER_API_KEY ? 'exists' : 'missing');
       return new Response(JSON.stringify({
         success: false,
         error: 'AI service not configured. Please set OPENROUTER_API_KEY in Cloudflare Secrets.'
@@ -200,10 +209,13 @@ async function handleTopicGeneration(request, env, user) {
       });
     }
 
+    console.log('AI service enabled, generating prompt...');
     const prompt = getTopicGenerationPrompt(category, relationshipStage);
+    console.log('Prompt generated, calling AI service...');
+    
     const result = await aiService.getResponse('topic', prompt);
 
-    console.log('AI topics generated:', result.content);
+    console.log('AI response received:', result.content?.substring(0, 100));
     
     const topics = parseTopics(result.content);
     console.log('Parsed topics:', topics);
