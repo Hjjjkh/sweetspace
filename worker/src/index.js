@@ -55,7 +55,10 @@ export default {
 
       // 初始化接口不需要 JWT 认证（允许匿名访问）
       if (path === '/api/auth/init' && request.method === 'POST') {
-        return handleAuth(request, env, { needs_init: true }, ctx);
+        console.log('收到 /api/auth/init 请求，user:', user);
+        const result = await handleAuth(request, env, { needs_init: true }, ctx);
+        console.log('/api/auth/init 响应状态:', result.status);
+        return result;
       }
 
       // 事件管理

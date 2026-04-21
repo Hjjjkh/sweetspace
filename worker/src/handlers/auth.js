@@ -6,6 +6,11 @@ import { generateUUID } from '../utils/helpers.js';
  */
 export async function handleAuth(request, env, user, ctx) {
   const url = new URL(request.url);
+  console.log('handleAuth 被调用:', {
+    path: url.pathname,
+    method: request.method,
+    user: user
+  });
 
   // GET /api/auth/me - 获取当前用户信息
   if (request.method === 'GET' && url.pathname === '/api/auth/me') {
@@ -14,7 +19,10 @@ export async function handleAuth(request, env, user, ctx) {
 
   // POST /api/auth/init - 初始化双人关系
   if (request.method === 'POST' && url.pathname === '/api/auth/init') {
-    return await initializeUsers(request, env, ctx);
+    console.log('调用 initializeUsers');
+    const result = await initializeUsers(request, env, ctx);
+    console.log('initializeUsers 返回:', result.status);
+    return result;
   }
 
   return jsonResponse({ error: 'Method not allowed' }, { status: 405 });
@@ -91,11 +99,14 @@ async function getCurrentUser(request, env, user) {
  */
 async function initializeUsers(request, env, ctx) {
   try {
+    console.log('开始 initializeUsers');
     const body = await request.json();
+    console.log('请求 body:', body);
     const { email, name, partner_email, partner_name } = body;
 
     // 验证必填字段
     if (!email || !name || !partner_email || !partner_name) {
+      console.log('验证失败：缺少必填字段');
       return jsonResponse(
         { error: 'Validation Error', message: '缺少必填字段' },
         { status: 400 }
@@ -103,9 +114,12 @@ async function initializeUsers(request, env, ctx) {
     }
 
     // 检查是否已存在用户
+    console.log('检查用户数量...');
     const existingUsers = await env.DB.prepare('SELECT COUNT(*) as count FROM users').first();
+    console.log('当前用户数量:', existingUsers.count);
     
     if (existingUsers.count >= 2) {
+      console.log('用户数已达上限，返回 403');
       return jsonResponse(
         { error: 'Forbidden', message: '系统仅支持双人，初始化已完成' },
         { status: 403 }
