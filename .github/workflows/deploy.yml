@@ -57,41 +57,12 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       
       - name: Deploy Worker
-        run: |
-          cd worker
-          echo "Deploying Worker..."
-          npx wrangler deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      
-      - name: Fix Bindings (强制绑定 D1 和 R2)
-        run: |
-          echo "⚙️  Applying bindings via API..."
-          
-          # 设置绑定
-          curl -X PATCH \
-            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/workers/services/sweetspace/bindings" \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            --data '{
-              "bindings": [
-                {
-                  "type": "d1",
-                  "name": "DB",
-                  "database_id": "0b02e937-7109-4369-aa59-a2a2e8545608",
-                  "dataset": "love-space-db"
-                },
-                {
-                  "type": "r2_bucket",
-                  "name": "BUCKET",
-                  "bucket_name": "love-space-media"
-                }
-              ]
-            }'
-          
-          echo "✅ Bindings applied!"
-        continue-on-error: true
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          packageManager: npm
       
       - name: Initialize Database
         run: |
