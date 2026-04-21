@@ -46,31 +46,27 @@ jobs:
         run: ./node_modules/.bin/vite build
       
       - name: Deploy Frontend to Pages
-        uses: cloudflare/wrangler-action@v3.13.0
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: frontend
-          command: pages deploy dist --project-name=love-space --commit-dirty=true
+          command: pages deploy dist --project-name love-space
       
       - name: Deploy Worker
-        uses: cloudflare/wrangler-action@v3.13.0
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: worker
-          command: deploy
       
       - name: Initialize Database
-        uses: cloudflare/wrangler-action@v3.13.0
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: worker
-          command: >
-            d1 execute love-space-db --file=./schema.sql --remote &&
-            d1 execute love-space-db --file=./migrations/ai-features.sql --remote &&
-            d1 execute love-space-db --file=./migrations/cycle-health.sql --remote
+          command: d1 execute love-space-db --file=./migrations/cycle-health.sql --remote
         continue-on-error: true
         
       - name: Deployment Summary
