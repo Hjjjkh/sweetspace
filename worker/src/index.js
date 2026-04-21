@@ -43,6 +43,27 @@ export default {
         return jsonResponse({ status: 'ok', timestamp: Date.now() });
       }
 
+      // 测试接口：验证 D1 连接
+      if (path === '/api/test-db') {
+        try {
+          const result = await env.DB.prepare('SELECT 1 as test').first();
+          return jsonResponse({ success: true, result });
+        } catch (e) {
+          return jsonResponse({ success: false, error: e.message }, { status: 500 });
+        }
+      }
+
+      // 测试接口：验证 AI 配置
+      if (path === '/api/test-ai') {
+        const hasKey = !!env.OPENROUTER_API_KEY;
+        const keyPreview = hasKey ? env.OPENROUTER_API_KEY.substring(0, 10) + '***' : 'none';
+        return jsonResponse({ 
+          hasKey, 
+          keyPreview,
+          model: env.AI_MODEL 
+        });
+      }
+
       // Cron 任务
       if (path === '/api/cron/daily' && request.method === 'POST') {
         return handleCron(request, env, ctx);
