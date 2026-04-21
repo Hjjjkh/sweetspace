@@ -30,20 +30,20 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       
-      - name: Install root dependencies
-        run: npm ci --ignore-scripts || npm install
+      - name: Install dependencies
+        run: |
+          npm install --include=dev
+          cd frontend && npm install --include=dev
+          cd ../worker && npm install --include=dev
       
-      - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: npm ci || npm install
-      
-      - name: Install worker dependencies
-        working-directory: ./worker
-        run: npm ci || npm install
+      - name: Verify installation
+        run: |
+          which vite || echo "vite not in PATH"
+          ls -la frontend/node_modules/.bin/vite || echo "vite binary not found"
       
       - name: Build frontend
         working-directory: ./frontend
-        run: npm run build
+        run: ./node_modules/.bin/vite build
       
       - name: Deploy Frontend to Pages
         uses: cloudflare/wrangler-action@v3.13.0
