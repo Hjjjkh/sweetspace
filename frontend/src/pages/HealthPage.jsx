@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { format, startOfWeek, addWeeks, subWeeks } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Heart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import WeekCalendar from '../components/cycle/WeekCalendar';
+import CycleCalendar from '../components/cycle/CycleCalendar';
 import CycleOverview from '../components/cycle/CycleOverview';
 import CycleSetupModal from '../components/cycle/CycleSetupModal';
 import DayEditModal from '../components/cycle/DayEditModal';
@@ -52,14 +52,6 @@ export default function HealthPage() {
     }
   }
 
-  function handlePrevWeek() {
-    setCurrentWeek(prev => subWeeks(prev, 1));
-  }
-
-  function handleNextWeek() {
-    setCurrentWeek(prev => addWeeks(prev, 1));
-  }
-
   function handleDayClick(day) {
     setSelectedDay(day);
   }
@@ -94,17 +86,20 @@ export default function HealthPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-red-50 p-4 sm:p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 font-display flex items-center gap-3">
-            <Heart className="w-7 h-7 text-red-500" fill="currentColor" />
-            健康记录
-          </h2>
+          <div>
+            <h2 className="text-3xl font-bold text-gray-800 font-display flex items-center gap-3">
+              <Heart className="w-8 h-8 text-red-500" fill="currentColor" />
+              健康记录
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">记录生理周期，关爱每一天</p>
+          </div>
           {overview?.has_cycle && (
             <button
               onClick={() => setShowSetup(true)}
-              className="text-sm text-red-600 hover:text-red-700 font-medium cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 bg-white/50 hover:bg-white rounded-lg transition-all cursor-pointer"
             >
               设置周期
             </button>
@@ -116,30 +111,10 @@ export default function HealthPage() {
           <CycleOverview overview={overview} />
         )}
 
-        {/* 周导航 */}
-        <div className="bg-white/70 backdrop-blur-glass border border-rose-border rounded-2xl p-4 shadow-glass">
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={handlePrevWeek}
-              className="p-2 hover:bg-white/50 rounded-xl transition-colors cursor-pointer"
-            >
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
-            </button>
-          <h3 className="text-lg font-bold text-gray-800">
-            {format(currentWeek, 'yyyy 年 MM 月 dd 日', { locale: zhCN })} - {format(addWeeks(currentWeek, 6), 'MM 月 dd 日')}
-          </h3>
-            <button
-              onClick={handleNextWeek}
-              disabled={addWeeks(currentWeek, 1) > new Date()}
-              className="p-2 hover:bg-white/50 rounded-xl transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-5 h-5 text-gray-600" />
-            </button>
-          </div>
-
-          {/* 周日历 */}
+        {/* 日历卡片 */}
+        <div className="bg-white/80 backdrop-blur-glass border border-rose-border rounded-3xl p-6 shadow-glass">
           {weekData && (
-            <WeekCalendar
+            <CycleCalendar
               days={weekData.days}
               onDayClick={handleDayClick}
             />
@@ -147,13 +122,40 @@ export default function HealthPage() {
         </div>
 
         {/* 图例说明 */}
-        <div className="bg-white/70 backdrop-blur-glass border border-rose-border rounded-2xl p-4 shadow-glass">
-          <h4 className="text-sm font-bold text-gray-700 mb-3">周期阶段说明</h4>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <PhaseLegend phase="period" label="经期" color="bg-red-100 border-red-300" />
-            <PhaseLegend phase="follicular" label="卵泡期" color="bg-green-100 border-green-300" />
-            <PhaseLegend phase="ovulation" label="排卵期" color="bg-purple-100 border-purple-300" />
-            <PhaseLegend phase="luteal" label="黄体期" color="bg-orange-100 border-orange-300" />
+        <div className="bg-white/80 backdrop-blur-glass border border-rose-border rounded-2xl p-5 shadow-glass">
+          <h4 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+            <Heart className="w-4 h-4" />
+            周期阶段说明
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <PhaseLegend 
+              phase="period" 
+              label="经期" 
+              description="月经期间"
+              color="bg-red-100 border-red-300" 
+              icon={<Droplet className="w-5 h-5 text-red-600" />}
+            />
+            <PhaseLegend 
+              phase="follicular" 
+              label="卵泡期" 
+              description="身体准备排卵"
+              color="bg-green-100 border-green-300" 
+              icon={<Heart className="w-5 h-5 text-green-600" />}
+            />
+            <PhaseLegend 
+              phase="ovulation" 
+              label="排卵期" 
+              description="受孕高峰期"
+              color="bg-purple-100 border-purple-300" 
+              icon={<Sparkles className="w-5 h-5 text-purple-600" />}
+            />
+            <PhaseLegend 
+              phase="luteal" 
+              label="黄体期" 
+              description="为下次月经准备"
+              color="bg-orange-100 border-orange-300" 
+              icon={<Activity className="w-5 h-5 text-orange-600" />}
+            />
           </div>
         </div>
       </div>
@@ -178,11 +180,18 @@ export default function HealthPage() {
   );
 }
 
-function PhaseLegend({ phase, label, color }) {
+import { Droplet, Sparkles, Heart, Activity } from 'lucide-react';
+
+function PhaseLegend({ phase, label, description, color, icon }) {
   return (
-    <div className="flex items-center gap-2">
-      <div className={`w-4 h-4 rounded ${color} border`} />
-      <span className="text-sm text-gray-600">{label}</span>
+    <div className={`flex items-center gap-3 p-3 rounded-xl ${color} border`}>
+      <div className="flex-shrink-0">
+        {icon}
+      </div>
+      <div>
+        <div className="text-sm font-bold text-gray-800">{label}</div>
+        <div className="text-xs text-gray-600">{description}</div>
+      </div>
     </div>
   );
 }
