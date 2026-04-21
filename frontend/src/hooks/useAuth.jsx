@@ -4,8 +4,10 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext(null);
 
 // API Configuration
-// Use relative path - Cloudflare Pages will proxy to Worker via _redirects
-const API_BASE = '/api';
+// Direct Worker URL for production
+const API_BASE = import.meta.env.PROD 
+  ? 'https://sweetspace.248851185.workers.dev/api' 
+  : '/api';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
