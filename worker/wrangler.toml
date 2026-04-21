@@ -6,7 +6,7 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "love-space-db"
-# database_id 在 Cloudflare Dashboard 配置
+database_id = "0b02e937-7109-4369-aa59-a2a2e8545608"
 
 # R2 Storage binding (用于相册文件存储)
 [[r2_buckets]]
