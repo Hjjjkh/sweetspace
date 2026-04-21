@@ -114,8 +114,7 @@ export function getTopicGenerationPrompt(category, relationshipStage) {
     married: '婚姻期（已婚）'
   };
 
-  // 添加随机种子，确保每次生成不同的 prompt
-  const randomSeed = Math.floor(Math.random() * 1000000);
+  const today = new Date().toISOString().split('T')[0];
 
   return `你是一对情侣的对话启动器。请为${stageDescriptions[relationshipStage] || '稳定期'}的情侣生成${categoryDescriptions[category] || '日常话题'}。
 
@@ -131,7 +130,28 @@ export function getTopicGenerationPrompt(category, relationshipStage) {
 
 用中文生成问题。
 
-随机种子：${randomSeed}`;
+随机种子：${Date.now()}`;
+}
+
+// Daily Question Prompt
+export function getDailyQuestionPrompt(category) {
+  const categoryDescriptions = {
+    general: '日常话题，关注当下的感受和想法',
+    deep: '深度交流，探索内心和关系本质',
+    fun: '轻松有趣，发现生活中的小美好',
+    memory: '回忆往事，重温共同经历的美好',
+    future: '未来规划，共同憧憬和计划'
+  };
+
+  return `你是一对情侣的每日问题生成器。请为今天生成一个${categoryDescriptions[category] || '日常话题'}的问题。
+
+要求：
+1. 问题简短（20-50 字）
+2. 开放性问题，避免是非题
+3. 温暖、积极、能引发思考
+4. 贴近情侣关系
+
+只需返回问题本身，不要其他内容。`;
 }
 
 // Relationship Insight Prompt

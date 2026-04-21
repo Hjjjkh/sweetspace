@@ -1,5 +1,7 @@
 import { jsonResponse } from '../index.js';
 import { generateUUID, formatDate, toTimestamp } from '../utils/helpers.js';
+import { AIService } from '../services/ai.js';
+import { getDailyQuestionPrompt } from '../prompts/index.js';
 
 /**
  * 每日互动问答处理器
@@ -10,7 +12,7 @@ export async function handleDailyQuestions(request, env, user, ctx) {
 
   // GET /api/daily/current
   if (pathSegments[pathSegments.length - 1] === 'current') {
-    return await getCurrentDailyQuestion(request, env, user);
+    return await getCurrentDailyQuestion(request, env, user, ctx);
   }
 
   // GET /api/daily/history
@@ -27,9 +29,9 @@ export async function handleDailyQuestions(request, env, user, ctx) {
 }
 
 /**
- * 获取今日问题
+ * 获取今日问题（如果没有则 AI 自动生成）
  */
-async function getCurrentDailyQuestion(request, env, user) {
+async function getCurrentDailyQuestion(request, env, user, ctx) {
   if (!user || !user.id) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -38,18 +40,24 @@ async function getCurrentDailyQuestion(request, env, user) {
 
   try {
     // 获取今日问题
-    const question = await env.DB.prepare(
+    let question = await env.DB.prepare(
       'SELECT * FROM daily_questions WHERE date = ?'
     ).bind(today).first();
 
+    // 如果没有今日问题，AI 自动生成
     if (!question) {
-      return jsonResponse({
-        success: true,
-        data: {
-          question: null,
-          message: '今日问题尚未生成'
-        }
-      });
+      console.log('今日问题不存在，AI 自动生成...');
+      question = await generateDailyQuestionWithAI(env, user, ctx, today);
+      
+      if (!question) {
+        return jsonResponse({
+          success: true,
+          data: {
+            question: null,
+            message: 'AI 问题生成失败，请稍后再试'
+          }
+        });
+      }
     }
 
     // 获取我的答案
@@ -95,6 +103,108 @@ async function getCurrentDailyQuestion(request, env, user) {
       { error: 'Database error', message: error.message },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * AI 自动生成每日问题
+ */
+async function generateDailyQuestionWithAI(env, user, ctx, date) {
+  try {
+    const aiService = new AIService(env, user);
+    
+    if (!aiService.isEnabled()) {
+      console.warn('AI 未配置，使用默认问题');
+      // 返回默认问题
+      return await createDefaultDailyQuestion(env, date);
+    }
+
+    // 从 5 个分类中随机选择一个
+    const categories = ['general', 'deep', 'fun', 'memory', 'future'];
+    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+    
+    const prompt = getDailyQuestionPrompt(randomCategory);
+    
+    // 调用 AI 生成问题
+    const result = await aiService.callAI([
+      { role: 'user', content: prompt }
+    ], 200, 0.8);
+    
+    // 提取生成的问题（去除可能的多余文本）
+    const generatedQuestion = result.content
+      .replace(/^[•\-\*]\s*/, '')
+      .replace(/^\d+[\.\)]\s*/, '')
+      .trim()
+      .split('\n')[0];
+
+    if (!generatedQuestion || generatedQuestion.length < 5) {
+      console.warn('AI 生成的问题无效，使用默认问题');
+      return await createDefaultDailyQuestion(env, date);
+    }
+
+    // 保存到数据库
+    const id = generateUUID();
+    const now = toTimestamp(new Date());
+    
+    await env.DB.prepare(`
+      INSERT INTO daily_questions (id, question, category, date, ai_generated, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(id, generatedQuestion, randomCategory, date, 1, now).run();
+
+    console.log(`AI 生成${date}问题成功：${generatedQuestion}`);
+
+    return {
+      id,
+      question: generatedQuestion,
+      category: randomCategory,
+      date,
+      ai_generated: 1
+    };
+
+  } catch (error) {
+    console.error('AI 生成每日问题失败:', error);
+    // 降级到默认问题
+    return await createDefaultDailyQuestion(env, date);
+  }
+}
+
+/**
+ * 创建默认每日问题（降级方案）
+ */
+async function createDefaultDailyQuestion(env, date) {
+  const defaultQuestions = [
+    { question: '今天有什么让你感激的事情吗？', category: 'general' },
+    { question: '这周最让你开心的瞬间是什么？', category: 'fun' },
+    { question: '最近有什么新的想法想和我分享吗？', category: 'general' },
+    { question: '你觉得我们之间最珍贵的是什么？', category: 'deep' },
+    { question: '有什么小事是我做的让你感到被爱的吗？', category: 'memory' },
+    { question: '希望我们一起做什么有趣的事情？', category: 'fun' },
+    { question: '你对我们的未来有什么期待？', category: 'future' }
+  ];
+
+  // 根据日期选择一个（确保同一天相同）
+  const dayOfMonth = new Date(date).getDate();
+  const selected = defaultQuestions[dayOfMonth % defaultQuestions.length];
+
+  const id = generateUUID();
+  const now = toTimestamp(new Date());
+
+  try {
+    await env.DB.prepare(`
+      INSERT INTO daily_questions (id, question, category, date, ai_generated, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(id, selected.question, selected.category, date, 0, now).run();
+
+    return {
+      id,
+      question: selected.question,
+      category: selected.category,
+      date,
+      ai_generated: 0
+    };
+  } catch (error) {
+    console.error('创建默认问题失败:', error);
+    return null;
   }
 }
 
