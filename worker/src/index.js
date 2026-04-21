@@ -147,7 +147,8 @@ async function getUserFromRequest(request, env) {
     return {
       id: 'dev-user-1',
       email: 'dev@example.com',
-      name: 'Developer'
+      name: 'Developer',
+      needs_init: true
     };
   }
 
@@ -155,7 +156,13 @@ async function getUserFromRequest(request, env) {
   const jwtAssertion = request.headers.get('Cf-Access-Jwt-Assertion');
   
   if (!jwtAssertion) {
-    return null;
+    // 如果没有 JWT，返回一个临时用户对象，标记需要初始化
+    return {
+      id: null,
+      email: null,
+      name: null,
+      needs_init: true
+    };
   }
 
   try {
@@ -164,11 +171,17 @@ async function getUserFromRequest(request, env) {
     return {
       id: payload.sub || payload.email,
       email: payload.email,
-      name: payload.name || payload.email.split('@')[0]
+      name: payload.name || payload.email.split('@')[0],
+      needs_init: false
     };
   } catch (e) {
     console.error('JWT decode error:', e);
-    return null;
+    return {
+      id: null,
+      email: null,
+      name: null,
+      needs_init: true
+    };
   }
 }
 
