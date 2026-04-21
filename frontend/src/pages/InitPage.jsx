@@ -23,7 +23,11 @@ export default function InitPage() {
     try {
       const result = await initializeUsers(formData);
       if (result.success) {
-        navigate('/');
+        // 等待用户状态刷新后再跳转
+        setTimeout(() => {
+          navigate('/', { replace: true });
+          window.location.reload(); // 强制刷新页面
+        }, 500);
       }
     } catch (err) {
       setError(err.response?.data?.message || '初始化失败，请重试');
