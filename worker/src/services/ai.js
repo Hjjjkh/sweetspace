@@ -39,12 +39,22 @@ export class AIService {
 
   // Check rate limit
   async checkRateLimit() {
-    const usage = await this.getTodayUsage();
-    return {
-      allowed: usage < this.rateLimit,
-      remaining: Math.max(0, this.rateLimit - usage),
-      total: this.rateLimit
-    };
+    try {
+      const usage = await this.getTodayUsage();
+      return {
+        allowed: usage < this.rateLimit,
+        remaining: Math.max(0, this.rateLimit - usage),
+        total: this.rateLimit
+      };
+    } catch (e) {
+      console.log('Rate limit check failed, allowing request:', e.message);
+      // If rate limit check fails, allow the request anyway
+      return {
+        allowed: true,
+        remaining: this.rateLimit,
+        total: this.rateLimit
+      };
+    }
   }
 
   // Get cached response
@@ -221,54 +231,69 @@ export class AIService {
 
   // Clear user's AI cache
   async clearCache() {
-    await this.env.DB.prepare(
-      'DELETE FROM ai_responses WHERE user_id = ?'
-    )
-      .bind(this.user.id)
-      .run();
+    try {
+      await this.env.DB.prepare(
+        'DELETE FROM ai_responses WHERE user_id = ?'
+      )
+        .bind(this.user.id)
+        .run();
 
-    return { success: true };
+      return { success: true };
+    } catch (e) {
+      console.log('Failed to clear cache:', e.message);
+      throw e; // Re-throw so caller knows it failed
+    }
   }
 
   // Get AI usage statistics
   async getUsageStats() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStart = Math.floor(today.getTime() / 1000);
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStart = Math.floor(today.getTime() / 1000);
 
-    const todayUsage = await this.env.DB.prepare(
-      'SELECT COUNT(*) as count, SUM(tokens_used) as total_tokens FROM ai_usage_log WHERE user_id = ? AND created_at >= ?'
-    )
-      .bind(this.user.id, todayStart)
-      .first();
+      const todayUsage = await this.env.DB.prepare(
+        'SELECT COUNT(*) as count, SUM(tokens_used) as total_tokens FROM ai_usage_log WHERE user_id = ? AND created_at >= ?'
+      )
+        .bind(this.user.id, todayStart)
+        .first();
 
-    const totalUsage = await this.env.DB.prepare(
-      'SELECT COUNT(*) as count FROM ai_usage_log WHERE user_id = ?'
-    )
-      .bind(this.user.id)
-      .first();
+      const totalUsage = await this.env.DB.prepare(
+        'SELECT COUNT(*) as count FROM ai_usage_log WHERE user_id = ?'
+      )
+        .bind(this.user.id)
+        .first();
 
-    const cacheSize = await this.env.DB.prepare(
-      'SELECT COUNT(*) as count FROM ai_responses WHERE user_id = ?'
-    )
-      .bind(this.user.id)
-      .first();
+      const cacheSize = await this.env.DB.prepare(
+        'SELECT COUNT(*) as count FROM ai_responses WHERE user_id = ?'
+      )
+        .bind(this.user.id)
+        .first();
 
-    return {
-      today: {
-        requests: todayUsage.count || 0,
-        tokens: todayUsage.total_tokens || 0,
-        limit: this.rateLimit,
-        remaining: Math.max(0, this.rateLimit - (todayUsage.count || 0))
-      },
-      total: {
-        requests: totalUsage.count || 0
-      },
-      cache: {
-        size: cacheSize.count || 0,
-        maxAge: this.cacheDays
-      }
-    };
+      return {
+        today: {
+          requests: todayUsage.count || 0,
+          tokens: todayUsage.total_tokens || 0,
+          limit: this.rateLimit,
+          remaining: Math.max(0, this.rateLimit - (todayUsage.count || 0))
+        },
+        total: {
+          requests: totalUsage.count || 0
+        },
+        cache: {
+          size: cacheSize.count || 0,
+          maxAge: this.cacheDays
+        }
+      };
+    } catch (e) {
+      console.log('Failed to get usage stats:', e.message);
+      // Return default stats if tables don't exist
+      return {
+        today: { requests: 0, tokens: 0, limit: this.rateLimit, remaining: this.rateLimit },
+        total: { requests: 0 },
+        cache: { size: 0, maxAge: this.cacheDays }
+      };
+    }
   }
 
   // MD5 hash using Web Crypto API (compatible with Cloudflare Workers)
