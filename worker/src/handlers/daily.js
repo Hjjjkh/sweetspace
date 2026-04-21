@@ -30,7 +30,7 @@ export async function handleDailyQuestions(request, env, user, ctx) {
  * 获取今日问题
  */
 async function getCurrentDailyQuestion(request, env, user) {
-  if (!user) {
+  if (!user || !user.id) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -102,7 +102,7 @@ async function getCurrentDailyQuestion(request, env, user) {
  * 提交每日答案
  */
 async function submitDailyAnswer(request, env, user, ctx) {
-  if (!user) {
+  if (!user || !user.id) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -194,7 +194,7 @@ async function submitDailyAnswer(request, env, user, ctx) {
  * 获取历史问答记录
  */
 async function getDailyHistory(request, env, user) {
-  if (!user) {
+  if (!user || !user.id) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -32,7 +32,7 @@ export async function handleMessages(request, env, user, ctx) {
  * 获取留言列表
  */
 async function getMessages(request, env, user) {
-  if (!user) {
+  if (!user || !user.id) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -102,7 +102,7 @@ async function getMessages(request, env, user) {
  * 创建留言
  */
 async function createMessage(request, env, user, ctx) {
-  if (!user) {
+  if (!user || !user.id) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
   }
 

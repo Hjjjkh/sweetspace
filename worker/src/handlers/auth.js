@@ -24,11 +24,18 @@ export async function handleAuth(request, env, user, ctx) {
  * 获取当前用户信息
  */
 async function getCurrentUser(request, env, user) {
-  if (!user) {
-    return jsonResponse(
-      { error: 'Unauthorized', message: '请先登录' },
-      { status: 401 }
-    );
+  // 如果用户未登录，返回需要初始化的标记
+  if (!user || !user.id || user.needs_init) {
+    return jsonResponse({
+      success: true,
+      data: {
+        id: null,
+        email: null,
+        name: null,
+        needs_init: true,
+        message: '请先注册或登录'
+      }
+    });
   }
 
   try {

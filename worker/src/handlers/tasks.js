@@ -34,7 +34,7 @@ export async function handleTasks(request, env, user, ctx) {
  * 获取任务列表
  */
 async function getTasks(request, env, user) {
-  if (!user) {
+  if (!user || !user.id) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -88,7 +88,7 @@ async function getTasks(request, env, user) {
  * 创建任务
  */
 async function createTask(request, env, user, ctx) {
-  if (!user) {
+  if (!user || !user.id) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
   }
 

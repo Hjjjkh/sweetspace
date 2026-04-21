@@ -22,7 +22,7 @@ export async function handleMoods(request, env, user, ctx) {
  * 获取情绪记录
  */
 async function getMoods(request, env, user) {
-  if (!user) {
+  if (!user || !user.id) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -77,7 +77,7 @@ async function getMoods(request, env, user) {
  * 记录今日情绪
  */
 async function createMood(request, env, user, ctx) {
-  if (!user) {
+  if (!user || !user.id) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
   }
 

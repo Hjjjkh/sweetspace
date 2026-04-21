@@ -93,6 +93,17 @@ async function handleGetWeekData(request, env, user) {
     return new Response('Method not allowed', { status: 405 });
   }
 
+  // 如果用户未登录，返回空数据
+  if (!user || !user.id) {
+    return new Response(JSON.stringify({
+      success: true,
+      data: {
+        current_cycle: null,
+        days: []
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
   const url = new URL(request.url);
   const weekStart = url.searchParams.get('week_start') || new Date().toISOString().split('T')[0];
 
@@ -252,6 +263,17 @@ async function handleUpdateDaily(request, env, user, ctx) {
 async function handleGetOverview(request, env, user) {
   if (request.method !== 'GET') {
     return new Response('Method not allowed', { status: 405 });
+  }
+
+  // 如果用户未登录，返回空数据
+  if (!user || !user.id) {
+    return new Response(JSON.stringify({
+      success: true,
+      data: {
+        has_cycle: false,
+        message: '请先登录或注册'
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
   }
 
   const overview = await env.DB.prepare(`

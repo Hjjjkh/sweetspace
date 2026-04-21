@@ -22,7 +22,7 @@ export async function handleEvents(request, env, user, ctx) {
  * 获取事件列表
  */
 async function getEvents(request, env, user) {
-  if (!user) {
+  if (!user || !user.id) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -89,7 +89,7 @@ async function getEvents(request, env, user) {
  * 创建新事件
  */
 async function createEvent(request, env, user, ctx) {
-  if (!user) {
+  if (!user || !user.id) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -151,7 +151,7 @@ async function createEvent(request, env, user, ctx) {
  * 获取单个事件详情
  */
 export async function handleEventById(request, env, user, eventId, ctx) {
-  if (!user) {
+  if (!user || !user.id) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
   }
 

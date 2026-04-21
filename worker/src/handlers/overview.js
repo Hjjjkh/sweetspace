@@ -5,8 +5,8 @@ import { formatDate } from '../utils/helpers.js';
  * 关系概览处理器
  */
 export async function handleOverview(request, env, user) {
-  if (!user) {
-    return jsonResponse({ error: 'Unauthorized' }, { status: 401 });
+  if (!user || !user.id) {
+    return jsonResponse({ success: true, data: { summary: null, stats: {} } });
   }
 
   try {
