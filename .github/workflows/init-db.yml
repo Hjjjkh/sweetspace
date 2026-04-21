@@ -1,7 +1,7 @@
 name: Initialize Database
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # 只在手动触发时运行
 
 env:
   NODE_VERSION: '20'
@@ -21,9 +21,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       
-      - name: Install dependencies
-        run: npm ci
-      
       - name: Install worker dependencies
         working-directory: ./worker
         run: npm ci
@@ -31,13 +28,19 @@ jobs:
       - name: Initialize Database
         run: |
           cd worker
+          echo "Applying schema to D1..."
+          npx wrangler d1 execute love-space-db --file=./schema.sql --remote
+          
+          echo "Applying cycle health migration..."
           npx wrangler d1 execute love-space-db --file=./migrations/cycle-health.sql --remote
-        continue-on-error: true
-        
+          
+          echo "✅ Database initialized!"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      
       - name: Database Init Summary
         run: |
           echo "## Database Initialized" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ Database schema applied successfully!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Database: love-space-db" >> $GITHUB_STEP_SUMMARY
