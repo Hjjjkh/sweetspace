@@ -129,14 +129,25 @@ async function initializeUsers(request, env, ctx) {
     const user2Id = generateUUID();
     const now = Math.floor(Date.now() / 1000);
 
-    const stmt = env.DB.prepare(`
-      INSERT INTO users (id, email, name, partner_id, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+    // 第一步：先插入用户（partner_id 为 NULL）
+    const insertStmt = env.DB.prepare(`
+      INSERT INTO users (id, email, name, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?)
     `);
 
     await env.DB.batch([
-      stmt.bind(user1Id, email, name, user2Id, now, now),
-      stmt.bind(user2Id, partner_email, partner_name, user1Id, now, now)
+      insertStmt.bind(user1Id, email, name, now, now),
+      insertStmt.bind(user2Id, partner_email, partner_name, now, now)
+    ]);
+
+    // 第二步：更新 partner_id（此时两个用户都已存在）
+    const updateStmt = env.DB.prepare(`
+      UPDATE users SET partner_id = ?, updated_at = ? WHERE id = ?
+    `);
+
+    await env.DB.batch([
+      updateStmt.bind(user2Id, now, user1Id),
+      updateStmt.bind(user1Id, now, user2Id)
     ]);
 
     return jsonResponse({
