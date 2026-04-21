@@ -53,8 +53,9 @@ export default {
         return handleAuth(request, env, user);
       }
 
+      // 初始化接口不需要 JWT 认证（允许匿名访问）
       if (path === '/api/auth/init' && request.method === 'POST') {
-        return handleAuth(request, env, null, ctx);
+        return handleAuth(request, env, { needs_init: true }, ctx);
       }
 
       // 事件管理
