@@ -2,6 +2,7 @@
 // All AI-related API endpoints
 
 import { AIService } from '../services/ai.js';
+import { corsHeaders } from '../utils/cors.js';
 import {
   getMoodAnalysisPrompt,
   getPhotoDescriptionPrompt,
@@ -14,6 +15,18 @@ import {
 export async function handleAIRequest(request, env, user) {
   const url = new URL(request.url);
   const path = url.pathname.replace('/api/ai/', '');
+
+  // CORS Preflight for AI endpoints
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Max-Age': '86400'
+      }
+    });
+  }
 
   try {
     switch (path) {
@@ -51,7 +64,10 @@ export async function handleAIRequest(request, env, user) {
 // Mood Analysis Handler
 async function handleMoodAnalysis(request, env, user) {
   if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { 
+      status: 405,
+      headers: corsHeaders
+    });
   }
 
   const { days = 30, moodData } = await request.json();
@@ -73,7 +89,10 @@ async function handleMoodAnalysis(request, env, user) {
 // Photo Description Handler
 async function handlePhotoDescription(request, env, user) {
   if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { 
+      status: 405,
+      headers: corsHeaders
+    });
   }
 
   const { filename, existingTags = [] } = await request.json();
@@ -100,7 +119,10 @@ async function handlePhotoDescription(request, env, user) {
 // Message Polish Handler
 async function handleMessagePolish(request, env, user) {
   if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { 
+      status: 405,
+      headers: corsHeaders
+    });
   }
 
   const { draft, styles = ['温馨', '幽默', '深情'] } = await request.json();
@@ -125,7 +147,10 @@ async function handleMessagePolish(request, env, user) {
 // Date Planning Handler
 async function handleDatePlanning(request, env, user) {
   if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { 
+      status: 405,
+      headers: corsHeaders
+    });
   }
 
   const { preferences, occasion, budget, duration } = await request.json();
@@ -147,7 +172,10 @@ async function handleDatePlanning(request, env, user) {
 // Topic Generation Handler
 async function handleTopicGeneration(request, env, user) {
   if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { 
+      status: 405,
+      headers: corsHeaders
+    });
   }
 
   try {
@@ -174,29 +202,26 @@ async function handleTopicGeneration(request, env, user) {
 
     console.log('AI topics generated:', result.content);
 
-    return new Response(JSON.stringify({
-      success: true,
-      topics: parseTopics(result.content),
-      fromCache: result.fromCache
-    }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (error) {
-    console.error('Topic generation error:', error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: error.message
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+  return new Response(JSON.stringify({
+    success: true,
+    topics: parseTopics(result.content),
+    fromCache: result.fromCache
+  }), {
+    headers: { 
+      'Content-Type': 'application/json',
+      ...corsHeaders
+    }
+  });
+}
 }
 
 // Relationship Insight Handler
 async function handleRelationshipInsight(request, env, user) {
   if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { 
+      status: 405,
+      headers: corsHeaders
+    });
   }
 
   const { events, messages, moods, days = 7 } = await request.json();
@@ -218,7 +243,10 @@ async function handleRelationshipInsight(request, env, user) {
 // Usage Stats Handler
 async function handleAIUsage(request, env, user) {
   if (request.method !== 'GET') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { 
+      status: 405,
+      headers: corsHeaders
+    });
   }
 
   const aiService = new AIService(env, user);
@@ -235,7 +263,10 @@ async function handleAIUsage(request, env, user) {
 // Clear Cache Handler
 async function handleClearCache(request, env, user) {
   if (request.method !== 'DELETE') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { 
+      status: 405,
+      headers: corsHeaders
+    });
   }
 
   const aiService = new AIService(env, user);

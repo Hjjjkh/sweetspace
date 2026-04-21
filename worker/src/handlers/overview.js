@@ -10,17 +10,20 @@ export async function handleOverview(request, env, user) {
   }
 
   try {
-    // 使用视图获取概览数据
-    const overview = await env.DB.prepare(`
-      SELECT 
-        total_events,
-        total_messages,
-        moods_last_7days,
-        completed_tasks,
-        relationship_start_date,
-        days_together
-      FROM v_relationship_overview
-    `).first();
+    // 获取基础统计数据
+    const [eventsCount, messagesCount, moodsCount] = await Promise.all([
+      env.DB.prepare('SELECT COUNT(*) as count FROM events').first(),
+      env.DB.prepare('SELECT COUNT(*) as count FROM messages').first(),
+      env.DB.prepare('SELECT COUNT(*) as count FROM cycle_logs').first()
+    ]);
+
+    // 获取第一事件作为关系开始日期
+    const firstEvent = await env.DB.prepare(
+      "SELECT MIN(event_date) as start_date FROM events WHERE category = 'anniversary' OR category = 'first_time'"
+    ).first();
+
+    const relationshipStartDate = firstEvent?.start_date || new Date().toISOString().split('T')[0];
+    const daysTogether = Math.floor((Date.now() - new Date(relationshipStartDate).getTime()) / (1000 * 60 * 60 * 24));
 
     // 获取最近 7 天气情绪趋势
     const recentMoods = await env.DB.prepare(`
@@ -40,10 +43,10 @@ export async function handleOverview(request, env, user) {
     return jsonResponse({
       success: true,
       data: {
-        days_together: Math.floor(overview?.days_together || 0),
-        total_events: overview?.total_events || 0,
-        total_messages: overview?.total_messages || 0,
-        relationship_start_date: overview?.relationship_start_date,
+        days_together: daysTogether || 0,
+        total_events: eventsCount?.count || 0,
+        total_messages: messagesCount?.count || 0,
+        relationship_start_date: relationshipStartDate,
         recent_moods: recentMoods.results?.slice(0, 7) || [],
         streak_days: streakDays,
         upcoming_anniversaries: upcomingAnniversaries
