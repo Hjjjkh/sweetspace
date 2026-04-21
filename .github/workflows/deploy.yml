@@ -52,7 +52,6 @@ jobs:
           accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: frontend
           command: pages deploy dist --project-name=love-space --commit-dirty=true
-          preCommands: npm run build:frontend
       
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3.13.0
