@@ -161,34 +161,46 @@ async function getUserFromRequest(request, env) {
   // 生产环境：从 Cloudflare Access JWT 获取
   const jwtAssertion = request.headers.get('Cf-Access-Jwt-Assertion');
   
-  if (!jwtAssertion) {
-    // 如果没有 JWT，返回一个临时用户对象，标记需要初始化
-    return {
-      id: null,
-      email: null,
-      name: null,
-      needs_init: true
-    };
+  if (jwtAssertion) {
+    try {
+      // 验证 JWT (简化版本，生产环境应完整验证)
+      const payload = JSON.parse(atob(jwtAssertion.split('.')[1]));
+      return {
+        id: payload.sub || payload.email,
+        email: payload.email,
+        name: payload.name || payload.email.split('@')[0],
+        needs_init: false
+      };
+    } catch (e) {
+      console.error('JWT decode error:', e);
+    }
   }
-
+  
+  // 没有 JWT 时，检查系统是否已初始化
+  // 如果已初始化，返回当前用户（从数据库获取第一个用户）
   try {
-    // 验证 JWT (简化版本，生产环境应完整验证)
-    const payload = JSON.parse(atob(jwtAssertion.split('.')[1]));
-    return {
-      id: payload.sub || payload.email,
-      email: payload.email,
-      name: payload.name || payload.email.split('@')[0],
-      needs_init: false
-    };
+    const userQuery = await env.DB.prepare(
+      'SELECT id, email, name, avatar_url, partner_id FROM users LIMIT 1'
+    ).first();
+    
+    if (userQuery) {
+      // 系统已初始化，返回用户信息（允许访问）
+      return {
+        ...userQuery,
+        needs_init: false
+      };
+    }
   } catch (e) {
-    console.error('JWT decode error:', e);
-    return {
-      id: null,
-      email: null,
-      name: null,
-      needs_init: true
-    };
+    console.log('检查初始化状态失败:', e.message);
   }
+  
+  // 系统未初始化，返回需要初始化的标记
+  return {
+    id: null,
+    email: null,
+    name: null,
+    needs_init: true
+  };
 }
 
 /**
