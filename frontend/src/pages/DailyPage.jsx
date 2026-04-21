@@ -2,15 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { api, useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Sparkles, BookOpen, Calendar, Check, X } from 'lucide-react';
+import { Sparkles, BookOpen, Calendar, Check, X, Heart, Send, MessageCircle } from 'lucide-react';
 
-const categories = {
-  general: { label: '日常', color: 'from-blue-400 to-cyan-400' },
-  deep: { label: '深入', color: 'from-purple-400 to-pink-400' },
-  fun: { label: '趣味', color: 'from-yellow-400 to-orange-400' },
-  memory: { label: '回忆', color: 'from-pink-400 to-rose-400' },
-  future: { label: '未来', color: 'from-green-400 to-emerald-400' }
-};
+// 优雅阴影定义
+const softShadow = 'shadow-[0_4px_20px_-2px_rgba(219,39,119,0.12)]';
+const hoverShadow = 'hover:shadow-[0_8px_30px_-4px_rgba(219,39,119,0.20)]';
+const floatingShadow = 'shadow-[0_10px_40px_-10px_rgba(219,39,119,0.25)]';
 
 export default function DailyPage() {
   const { user } = useAuth();
@@ -73,38 +70,24 @@ export default function DailyPage() {
   }
 
   async function handleGenerateAITopics(category = 'general') {
-    console.log('[DailyPage] Starting AI topic generation, category:', category);
     setGeneratingTopic(true);
     try {
-      console.log('[DailyPage] Sending API request to /ai/generate-topic');
       const response = await api.post('/ai/generate-topic', {
         category,
         relationshipStage: 'stable'
       });
-      console.log('[DailyPage] API response:', response.data);
       if (response.data.success) {
-        console.log('[DailyPage] Topics generated:', response.data.data.topics);
         setGeneratedTopics(response.data.data.topics);
-        // 强制刷新页面状态
         await fetchDailyQuestion();
       } else {
-        console.error('[DailyPage] API returned success=false:', response.data);
         alert(response.data.error || 'AI 话题生成失败');
       }
     } catch (error) {
-      console.error('[DailyPage] Generate AI topics error:', error);
-      console.error('[DailyPage] Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        statusText: error.response?.statusText
-      });
+      console.error('Generate AI topics error:', error);
       if (error.response?.status === 503) {
-        alert('AI 服务未配置，请联系管理员设置 OPENROUTER_API_KEY');
-      } else if (error.response?.status === 429) {
-        alert('AI 调用频率过高，请稍后再试');
+        alert('AI 服务未配置');
       } else {
-        alert('AI 话题生成失败：' + (error.response?.data?.error || error.message || '请稍后再试'));
+        alert('AI 话题生成失败，请稍后再试');
       }
     } finally {
       setGeneratingTopic(false);
@@ -126,7 +109,6 @@ export default function DailyPage() {
     }
 
     try {
-      // 如果有当日问题，使用问题的 API；否则创建一条特殊消息
       if (dailyData?.question) {
         const response = await api.post('/daily/answer', {
           question_id: dailyData.question.id,
@@ -142,7 +124,6 @@ export default function DailyPage() {
           await fetchDailyQuestion();
         }
       } else {
-        // 如果没有当日问题，创建一条留言
         const response = await api.post('/messages', {
           content: `💭 话题讨论：${selectedTopic}\n\n${replyAnswer.trim()}`,
           unlock_at: new Date().toISOString(),
@@ -176,92 +157,96 @@ export default function DailyPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="relative">
-          <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-pink-200 border-t-pink-500 rounded-full animate-spin"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-8 animate-fade-in">
+      {/* 页面标题 */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 font-display flex items-center">
-          <Sparkles className="w-7 h-7 mr-3 text-primary-500" />
-          每日互动
-        </h2>
-        <div className="flex items-center gap-2">
+        <div>
+          <h2 className="text-3xl font-display font-bold text-pink-900 flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            每日互动
+          </h2>
+          <p className="text-sm text-pink-600 mt-2 ml-13">每天一个小问题，增进彼此了解</p>
+        </div>
+        
+        <div className="flex items-center gap-3">
           <button
             onClick={loadHistory}
-            className="flex items-center space-x-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors cursor-pointer"
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-pink-700 bg-white rounded-xl ${softShadow} hoverShadow transition-all cursor-pointer border border-pink-100`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>查看历史</span>
+            <span>历史</span>
           </button>
           <button
-            onClick={() => handleGenerateAITopics('general')}
+            onClick={handleGenerateAITopics}
             disabled={generatingTopic}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm
-              bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg
-              hover:from-purple-600 hover:to-pink-600
-              disabled:from-gray-400 disabled:to-gray-500
-              transition-all cursor-pointer shadow-md hover:shadow-lg
-            "
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-pink-500 to-pink-600 rounded-xl ${softShadow} hover:shadow-[0_8px_25px_-4px_rgba(219,39,119,0.4)] transition-all cursor-pointer disabled:from-gray-400 disabled:to-gray-500`}
           >
             {generatingTopic ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
               <Sparkles className="w-4 h-4" />
             )}
-            <span>AI 生成话题</span>
+            <span>AI 话题</span>
           </button>
         </div>
       </div>
 
       {/* 今日问题卡片 */}
       {dailyData?.question ? (
-        <div className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-pink-500 to-rose-500 rounded-3xl p-6 sm:p-8 text-white shadow-floating">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/3 -translate-x-1/4"></div>
+        <div className="relative overflow-hidden bg-gradient-to-br from-pink-500 via-pink-400 to-rose-400 rounded-3xl p-8 text-white floatingShadow">
+          {/* 装饰背景 */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/3 -translate-x-1/4 blur-3xl"></div>
           
           <div className="relative z-10">
-            <div className="flex items-center space-x-3 mb-5">
+            {/* 问题标签 */}
+            <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <Sparkles className="w-6 h-6" fill="currentColor" />
+                <Calendar className="w-6 h-6" />
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="font-medium">今日问题</span>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${categories[dailyData.question.category]?.color || 'from-gray-400 to-gray-500'}`}>
-                  {categories[dailyData.question.category]?.label || '日常'}
-                </span>
+              <div>
+                <span className="text-sm font-medium text-pink-100">今日问题</span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="px-3 py-1 bg-white/25 backdrop-blur-sm rounded-full text-xs font-semibold">
+                    {format(new Date(dailyData.question.date), 'MM 月 dd 日', { locale: zhCN })}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <p className="text-2xl sm:text-3xl font-bold mb-3 leading-relaxed font-display">
+            {/* 问题内容 */}
+            <p className="text-2xl sm:text-3xl font-display font-bold mb-8 leading-relaxed">
               {dailyData.question.question}
             </p>
-            <p className="text-sm sm:text-base opacity-90 mb-6 flex items-center">
-              <Calendar className="w-4 h-4 mr-1.5" />
-              {format(new Date(dailyData.question.date), 'yyyy 年 MM 月 dd 日', { locale: zhCN })}
-            </p>
 
+            {/* 回答表单 */}
             {!dailyData.my_answer ? (
-              <form onSubmit={handleSubmit} className="bg-white/15 backdrop-blur-sm rounded-2xl p-5 space-y-4">
+              <form onSubmit={handleSubmit} className="bg-white/15 backdrop-blur-md rounded-2xl p-6 space-y-5">
                 <div>
-                  <label className="block text-sm font-medium mb-2 opacity-90">
+                  <label className="block text-sm font-medium text-pink-100 mb-2.5">
                     你的回答
                   </label>
                   <textarea
-                    className="w-full px-4 py-3 rounded-xl text-gray-800 bg-white/90 backdrop-blur-sm outline-none resize-none border-2 border-transparent focus:border-white/50 transition-all duration-200"
+                    className="w-full px-5 py-4 rounded-xl text-gray-800 bg-white/95 backdrop-blur-sm outline-none resize-none border-2 border-transparent focus:border-white/50 transition-all duration-200 placeholder:text-gray-400"
                     rows="4"
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
-                    placeholder="写下你的答案..."
+                    placeholder="写下你最真实的想法和感受..."
                   />
                 </div>
 
-                <label className="flex items-center space-x-2 cursor-pointer group">
+                <label className="flex items-center gap-3 cursor-pointer group">
                   <div className="relative">
                     <input
                       type="checkbox"
@@ -269,38 +254,45 @@ export default function DailyPage() {
                       onChange={(e) => setIsVisible(e.target.checked)}
                       className="sr-only peer"
                     />
-                    <div className="w-5 h-5 bg-white/20 rounded border border-white/30 peer-checked:bg-white peer-checked:border-white transition-all duration-200 flex items-center justify-center">
-                      {isVisible && <Check className="w-3.5 h-3.5 text-pink-500" strokeWidth={3} />}
+                    <div className="w-6 h-6 bg-white/20 rounded-lg border-2 border-white/30 peer-checked:bg-white peer-checked:border-white transition-all duration-200 flex items-center justify-center">
+                      {isVisible && <Check className="w-4 h-4 text-pink-500" strokeWidth={3} />}
                     </div>
                   </div>
-                  <span className="text-sm font-medium group-hover:opacity-100 opacity-90 transition-opacity">
+                  <span className="text-sm font-medium text-pink-50 group-hover:text-white transition-colors">
                     让 TA 看到我的答案
                   </span>
                 </label>
 
                 <button 
                   type="submit" 
-                  className="w-full bg-white text-pink-600 font-bold py-3.5 rounded-xl hover:bg-white/90 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl hover:-translate-y-0.5 font-medium"
+                  className="w-full bg-white text-pink-600 font-bold py-4 rounded-xl hover:bg-pink-50 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl cursor-pointer"
                 >
                   提交答案
                 </button>
               </form>
             ) : (
-              <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-5 space-y-4">
+              <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 space-y-5">
                 <div>
-                  <p className="text-sm font-medium opacity-80 mb-2">你的回答：</p>
-                  <p className="font-medium bg-white/20 rounded-xl p-4">{dailyData.my_answer.answer}</p>
+                  <p className="text-sm font-medium text-pink-100 mb-3">你的回答：</p>
+                  <div className="bg-white/20 rounded-xl p-5 backdrop-blur-sm">
+                    <p className="font-medium leading-relaxed">{dailyData.my_answer.answer}</p>
+                  </div>
                 </div>
 
                 {dailyData.partner_answer ? (
-                  <div className="border-t border-white/20 pt-4">
-                    <p className="text-sm font-medium opacity-80 mb-2">TA 的回答：</p>
-                    <p className="font-medium bg-white/20 rounded-xl p-4">{dailyData.partner_answer.answer}</p>
+                  <div className="border-t border-white/20 pt-5">
+                    <p className="text-sm font-medium text-pink-100 mb-3 flex items-center gap-2">
+                      <Heart className="w-4 h-4" fill="currentColor" />
+                      TA 的回答：
+                    </p>
+                    <div className="bg-white/20 rounded-xl p-5 backdrop-blur-sm">
+                      <p className="font-medium leading-relaxed">{dailyData.partner_answer.answer}</p>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex items-center space-x-2 text-sm opacity-75 bg-white/10 rounded-xl p-3">
-                    <Sparkles className="w-4 h-4" />
-                    <span>你的 TA 还没有回答哦~</span>
+                  <div className={`flex items-center gap-3 text-sm bg-white/10 rounded-xl p-4 ${softShadow}`}>
+                    <Sparkles className="w-5 h-5 text-pink-200" />
+                    <span className="text-pink-100">你的 TA 还没有回答哦~</span>
                   </div>
                 )}
               </div>
@@ -308,12 +300,12 @@ export default function DailyPage() {
           </div>
         </div>
       ) : (
-        <div className="bg-white/70 backdrop-blur-glass border border-rose-border rounded-2xl p-12 text-center shadow-glass">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md animate-float">
-            <Sparkles className="w-8 h-8 text-white" />
+        <div className="bg-white/80 backdrop-blur-md border border-pink-100 rounded-3xl p-16 text-center shadow-xl">
+          <div className="w-20 h-20 bg-gradient-to-br from-pink-400 to-rose-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg animate-float">
+            <Sparkles className="w-10 h-10 text-white" />
           </div>
-          <h3 className="text-lg font-bold text-gray-800 font-display mb-2">问题生成中</h3>
-          <p className="text-gray-600">
+          <h3 className="text-xl font-bold text-gray-800 font-display mb-3">问题生成中</h3>
+          <p className="text-gray-600 leading-relaxed">
             每日问题正在来的路上...<br/>
             请明天再来看吧
           </p>
@@ -322,49 +314,53 @@ export default function DailyPage() {
 
       {/* AI 生成话题 */}
       {generatedTopics.length > 0 && (
-        <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-rose-500 rounded-2xl p-6 shadow-floating">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-white" />
-              <h3 className="font-bold text-white text-lg">AI 生成的话题</h3>
+        <div className={`bg-white rounded-3xl p-8 border border-pink-100 ${floatingShadow}`}>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center shadow-md">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 font-display">AI 生成的话题</h3>
             </div>
             <button
               onClick={() => setGeneratedTopics([])}
-              className="text-white/70 hover:text-white cursor-pointer p-1 rounded hover:bg-white/10 transition-all"
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all cursor-pointer cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="space-y-2">
+          
+          <div className="grid gap-4">
             {generatedTopics.map((topic, idx) => (
               <div
                 key={idx}
-                className="bg-white/20 rounded-lg p-4 hover:bg-white/30 transition-all cursor-pointer group"
+                className={`group bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-5 hover:from-pink-100 hover:to-rose-100 transition-all duration-300 cursor-pointer border border-pink-100 ${hoverShadow}`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-white text-sm flex-1">{topic}</p>
+                <div className="flex items-start justify-between gap-4">
+                  <p className="text-gray-700 leading-relaxed flex-1">{topic}</p>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleTopicSelect(topic);
                     }}
-                    className="flex-shrink-0 px-3 py-1.5 bg-white/30 hover:bg-white/40 text-white text-xs font-medium rounded-lg transition-all cursor-pointer"
+                    className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-pink-500 text-pink-600 hover:text-white text-sm font-medium rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md border border-pink-100 hover:border-pink-500"
                   >
-                    💬 分享
+                    <MessageCircle className="w-4 h-4" />
+                    <span>分享</span>
                   </button>
                 </div>
-                <div className="flex items-center gap-3 mt-3">
+                <div className="flex items-center gap-4 mt-3.5">
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(topic);
                       alert('已复制话题');
                     }}
-                    className="text-white/70 hover:text-white text-xs cursor-pointer flex items-center gap-1 transition-colors"
+                    className="text-pink-500 hover:text-pink-700 text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-colors"
                   >
                     📋 复制
                   </button>
-                  <span className="text-white/40 text-xs">·</span>
-                  <span className="text-white/60 text-xs">点击"分享"写下想法并发送给 TA</span>
+                  <span className="text-pink-300">·</span>
+                  <span className="text-gray-500 text-xs">点击"分享"写下想法并发送给 TA</span>
                 </div>
               </div>
             ))}
@@ -374,51 +370,55 @@ export default function DailyPage() {
 
       {/* 话题回复弹窗 */}
       {showTopicReply && selectedTopic && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-scale-up">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-pink-500" />
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl animate-scale-up">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-800 font-display flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-rose-400 rounded-xl flex items-center justify-center">
+                  <Send className="w-5 h-5 text-white" />
+                </div>
                 分享话题给 TA
               </h3>
               <button
                 onClick={() => setShowTopicReply(false)}
-                className="text-gray-400 hover:text-gray-600 cursor-pointer cursor-pointer"
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all cursor-pointer cursor-pointer"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="mb-4 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-pink-100">
-              <p className="text-sm font-medium text-gray-700 leading-relaxed">
+            {/* 话题展示 */}
+            <div className="mb-6 p-5 bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl border border-pink-100">
+              <p className="text-gray-700 leading-relaxed font-medium">
                 {selectedTopic}
               </p>
             </div>
 
-            <form onSubmit={handleTopicReplySubmit} className="space-y-4">
+            <form onSubmit={handleTopicReplySubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2.5">
                   你的想法
                 </label>
                 <textarea
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-300 focus:ring-2 focus:ring-pink-100 outline-none resize-none transition-all"
+                  className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:border-pink-300 focus:ring-4 focus:ring-pink-100 outline-none resize-none transition-all placeholder:text-gray-400"
                   rows="5"
                   value={replyAnswer}
                   onChange={(e) => setReplyAnswer(e.target.value)}
                   placeholder="写下你的想法和感受，然后点击"分享给 TA"...
                   autoFocus
                 />
-                <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center justify-between mt-2.5">
                   <span className="text-xs text-gray-500">
                     {replyAnswer.length} 字
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <MessageCircle className="w-3.5 h-3.5" />
                     分享给 TA 后可在留言板查看
                   </span>
                 </div>
               </div>
 
-              <label className="flex items-center gap-2 cursor-pointer group">
+              <label className="flex items-center gap-3 cursor-pointer">
                 <div className="relative">
                   <input
                     type="checkbox"
@@ -426,11 +426,11 @@ export default function DailyPage() {
                     disabled
                     className="sr-only peer"
                   />
-                  <div className="w-5 h-5 bg-pink-100 rounded border border-pink-300 peer-checked:bg-pink-500 peer-checked:border-pink-500 transition-all duration-200 flex items-center justify-center">
-                    <Check className="w-3.5 h-3.5 text-pink-500 peer-checked:text-white" strokeWidth={3} />
+                  <div className="w-6 h-6 bg-pink-100 rounded-lg border-2 border-pink-300 peer-checked:bg-pink-500 peer-checked:border-pink-500 transition-all duration-200 flex items-center justify-center">
+                    <Check className="w-4 h-4 text-pink-500 peer-checked:text-white" strokeWidth={3} />
                   </div>
                 </div>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 font-medium">
                   让 TA 看到我的分享
                 </span>
               </label>
@@ -439,14 +439,14 @@ export default function DailyPage() {
                 <button
                   type="button"
                   onClick={() => setShowTopicReply(false)}
-                  className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-all cursor-pointer"
+                  className="flex-1 px-6 py-3.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-semibold transition-all cursor-pointer cursor-pointer"
                 >
                   取消
                 </button>
                 <button
                   type="submit"
                   disabled={!replyAnswer.trim()}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl font-bold hover:from-pink-600 hover:to-rose-600 disabled:from-gray-300 disabled:to-gray-400 transition-all cursor-pointer shadow-md hover:shadow-lg cursor-pointer"
+                  className="flex-1 px-6 py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl font-bold hover:from-pink-600 hover:to-rose-600 disabled:from-gray-300 disabled:to-gray-400 transition-all cursor-pointer shadow-lg hover:shadow-xl cursor-pointer"
                 >
                   💕 分享给 TA
                 </button>
@@ -456,52 +456,50 @@ export default function DailyPage() {
         </div>
       )}
 
-
       {/* 历史记录 */}
       {showHistory && (
-        <div className="bg-white/70 backdrop-blur-glass border border-rose-border rounded-2xl p-6 shadow-glass animate-slide-up">
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="text-lg font-bold text-gray-800 font-display flex items-center">
-              <BookOpen className="w-5 h-5 mr-2 text-primary-500" />
+        <div className={`bg-white rounded-3xl p-6 border border-pink-100 ${floatingShadow} animate-slide-up`}>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-800 font-display flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-rose-400 rounded-xl flex items-center justify-center shadow-md">
+                <BookOpen className="w-5 h-5 text-white" />
+              </div>
               历史回答
             </h3>
             <button
               onClick={() => setShowHistory(false)}
-              className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all cursor-pointer cursor-pointer"
             >
               收起
             </button>
           </div>
 
           {history.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">还没有历史回答</p>
+            <p className="text-gray-500 text-center py-12">还没有历史回答</p>
           ) : (
             <div className="space-y-3 max-h-96 overflow-y-auto">
-              {history.map((item, idx) => {
-                const cat = categories[item.category] || categories.general;
-                return (
-                  <div 
-                    key={idx}
-                    className="p-4 bg-white/50 rounded-xl hover:bg-white/70 transition-all duration-200 cursor-pointer"
-                  >
-                    <div className="flex items-center flex-wrap gap-2 mb-3">
-                      <span className={`px-2.5 py-1 rounded-lg text-xs font-bold bg-gradient-to-r ${cat.color} text-white`}>
-                        {cat.label}
-                      </span>
-                      <span className="text-xs text-gray-500 flex items-center">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        {format(new Date(item.date), 'yyyy-MM-dd', { locale: zhCN })}
-                      </span>
-                    </div>
-                    <p className="font-bold text-gray-800 font-display mb-2">{item.question}</p>
-                    {item.my_answer && (
-                      <p className="text-sm text-gray-600 bg-white/60 rounded-lg p-3">
-                        💭 {item.my_answer}
-                      </p>
-                    )}
+              {history.map((item, idx) => (
+                <div 
+                  key={idx}
+                  className={`p-5 bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl hover:from-pink-100 hover:to-rose-100 transition-all duration-200 cursor-pointer border border-pink-100`}
+                >
+                  <div className="flex items-center flex-wrap gap-2.5 mb-3">
+                    <span className="px-3 py-1.5 bg-gradient-to-r from-pink-400 to-rose-400 text-white text-xs font-bold rounded-xl shadow-sm">
+                      {item.category || '日常'}
+                    </span>
+                    <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {format(new Date(item.date), 'yyyy 年 MM 月 dd 日', { locale: zhCN })}
+                    </span>
                   </div>
-                );
-              })}
+                  <p className="font-bold text-gray-800 font-display mb-3 leading-relaxed">{item.question}</p>
+                  {item.my_answer && (
+                    <p className="text-sm text-gray-600 bg-white/70 rounded-xl p-4 leading-relaxed">
+                      💭 {item.my_answer}
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>

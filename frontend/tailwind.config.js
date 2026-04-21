@@ -37,7 +37,7 @@ export default {
         }
       },
       fontFamily: {
-        display: ['Cormorant Garamond', ' serif'],
+        display: ['Playfair Display', 'serif'],
         body: ['Inter', 'system-ui', 'sans-serif'],
       },
       backdropBlur: {
