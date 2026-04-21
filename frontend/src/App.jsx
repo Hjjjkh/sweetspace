@@ -31,27 +31,27 @@ function AppContent() {
   }
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<HomePage />} />
-          <Route path="timeline" element={<TimelinePage />} />
-          <Route path="messages" element={<MessagesPage />} />
-          <Route path="moods" element={<MoodsPage />} />
-          <Route path="daily" element={<DailyPage />} />
-          <Route path="gallery" element={<GalleryPage />} />
-          <Route path="health" element={<HealthPage />} />
-          <Route path="ai-settings" element={<AISettingsPage />} />
-        </Route>
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<HomePage />} />
+        <Route path="timeline" element={<TimelinePage />} />
+        <Route path="messages" element={<MessagesPage />} />
+        <Route path="moods" element={<MoodsPage />} />
+        <Route path="daily" element={<DailyPage />} />
+        <Route path="gallery" element={<GalleryPage />} />
+        <Route path="health" element={<HealthPage />} />
+        <Route path="ai-settings" element={<AISettingsPage />} />
+      </Route>
+    </Routes>
   );
 }
 
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <Router>
+        <AppContent />
+      </Router>
     </AuthProvider>
   );
 }
