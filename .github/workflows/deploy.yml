@@ -62,16 +62,15 @@ jobs:
           command: deploy
       
       - name: Initialize Database
-        run: |
-          cd worker
-          echo "Executing main schema..."
-          npx wrangler d1 execute love-space-db --file=./schema.sql --remote || echo "Schema may already exist"
-          
-          echo "Executing AI features migration..."
-          npx wrangler d1 execute love-space-db --file=./migrations/ai-features.sql --remote || echo "AI migration done"
-          
-          echo "Executing cycle health migration..."
-          npx wrangler d1 execute love-space-db --file=./migrations/cycle-health.sql --remote || echo "Cycle health migration done"
+        uses: cloudflare/wrangler-action@v3.13.0
+        with:
+          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          command: >
+            d1 execute love-space-db --file=./schema.sql --remote &&
+            d1 execute love-space-db --file=./migrations/ai-features.sql --remote &&
+            d1 execute love-space-db --file=./migrations/cycle-health.sql --remote
         continue-on-error: true
         
       - name: Deployment Summary
