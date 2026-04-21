@@ -29,11 +29,16 @@ export function AuthProvider({ children }) {
   }
 
   async function initializeUsers(userData) {
+    console.log('调用 initializeUsers:', userData);
     const response = await axios.post(`${API_BASE}/auth/init`, userData);
+    console.log('API 响应:', response.data);
     if (response.data.success) {
+      console.log('注册成功，刷新用户状态...');
       await fetchUser();
+      console.log('用户状态已刷新:', user);
       return response.data;
     }
+    return response.data;
   }
 
   const value = {

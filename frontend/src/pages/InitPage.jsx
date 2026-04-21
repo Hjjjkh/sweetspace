@@ -21,16 +21,22 @@ export default function InitPage() {
     setError('');
 
     try {
+      console.log('提交注册数据:', formData);
       const result = await initializeUsers(formData);
+      console.log('注册结果:', result);
+      
       if (result.success) {
-        // 等待用户状态刷新后再跳转
-        setTimeout(() => {
-          navigate('/', { replace: true });
-          window.location.reload(); // 强制刷新页面
-        }, 500);
+        console.log('注册成功，准备跳转...');
+        // 直接硬刷新，不使用 navigate
+        window.location.href = '/';
+        return;
+      } else {
+        setError('注册失败：' + (result.message || '未知错误'));
       }
     } catch (err) {
-      setError(err.response?.data?.message || '初始化失败，请重试');
+      console.error('注册错误:', err);
+      const errorMsg = err.response?.data?.message || err.message || '初始化失败，请重试';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
