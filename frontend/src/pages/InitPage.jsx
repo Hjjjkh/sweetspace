@@ -14,6 +14,33 @@ export default function InitPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resetting, setResetting] = useState(false);
+
+  async function handleReset() {
+    if (!confirm('确定要清空所有数据并重新开始吗？此操作不可恢复！')) return;
+    
+    setResetting(true);
+    setError('');
+    
+    try {
+      const response = await fetch('/api/auth/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('系统已重置！请重新注册。');
+        window.location.reload();
+      } else {
+        setError('重置失败：' + (result.message || '未知错误'));
+      }
+    } catch (err) {
+      setError('重置失败：' + err.message);
+    } finally {
+      setResetting(false);
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -197,15 +224,27 @@ export default function InitPage() {
             </button>
           </form>
 
-          {/* 安全提示 */}
-          <div className="mt-6 pt-4 border-t border-rose-border">
-            <p className="text-xs text-gray-500 text-center flex items-center justify-center">
-              <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              基于 Cloudflare，仅允许你们两人访问，完全私密安全
-            </p>
-          </div>
+           {/* 安全提示 */}
+           <div className="mt-6 pt-4 border-t border-rose-border">
+             <p className="text-xs text-gray-500 text-center flex items-center justify-center">
+               <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+               </svg>
+               基于 Cloudflare，仅允许你们两人访问，完全私密安全
+             </p>
+           </div>
+
+           {/* 重置按钮（仅测试用） */}
+           <div className="mt-4 text-center">
+             <button
+               type="button"
+               onClick={handleReset}
+               disabled={resetting}
+               className="text-xs text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+             >
+               {resetting ? '重置中...' : '⚠️ 清空数据重新开始'}
+             </button>
+           </div>
         </div>
       </div>
     </div>

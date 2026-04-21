@@ -1,4 +1,4 @@
-import { jsonResponse } from '../index.js';
+import { jsonResponse, getUserFromRequest } from '../index.js';
 import { generateUUID } from '../utils/helpers.js';
 
 /**
@@ -26,6 +26,39 @@ export async function handleAuth(request, env, user, ctx) {
   }
 
   return jsonResponse({ error: 'Method not allowed' }, { status: 405 });
+}
+
+/**
+ * 重置系统（删除所有用户数据）
+ */
+export async function handleReset(env) {
+  try {
+    console.log('开始重置系统...');
+    
+    // 删除所有表的数据
+    const tables = [
+      'event_media', 'events', 'messages', 'moods', 'tasks',
+      'daily_answers', 'daily_questions', 'gallery_items',
+      'cycle_logs', 'daily_health', 'users'
+    ];
+    
+    for (const table of tables) {
+      await env.DB.prepare(`DELETE FROM ${table}`).run();
+      console.log(`已清空 ${table}`);
+    }
+    
+    return jsonResponse({
+      success: true,
+      message: '系统已重置，可以重新注册'
+    });
+    
+  } catch (error) {
+    console.error('重置失败:', error);
+    return jsonResponse(
+      { error: 'Reset failed', message: error.message },
+      { status: 500 }
+    );
+  }
 }
 
 /**
