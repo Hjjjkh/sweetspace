@@ -215,10 +215,13 @@ async function handleTopicGeneration(request, env, user) {
     
     const result = await aiService.getResponse('topic', prompt);
 
-    console.log('AI response received:', result.content?.substring(0, 100));
+    console.log('AI response received, full content:', JSON.stringify(result.content));
+    console.log('AI response content type:', typeof result.content);
+    console.log('AI response content length:', result.content?.length);
     
     const topics = parseTopics(result.content);
     console.log('Parsed topics:', topics);
+    console.log('Parsed topics length:', topics.length);
 
     return new Response(JSON.stringify({
       success: true,
@@ -360,16 +363,42 @@ function parseMessagePolish(content) {
 
 // Helper: Parse topics response
 function parseTopics(content) {
+  console.log('[parseTopics] Input content:', content?.substring(0, 200));
+  
+  if (!content) {
+    console.warn('[parseTopics] Empty content received');
+    return [];
+  }
+  
   const topics = [];
   const lines = content.split('\n');
+  console.log('[parseTopics] Total lines:', lines.length);
 
-  for (const line of lines) {
-    const match = line.match(/^[*\-•]?\s*(.+)$/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Try multiple patterns
+    // Pattern 1: Bullet points (•, -, *)
+    const bulletMatch = line.match(/^[•\-\*]\s*(.+)$/);
+    // Pattern 2: Numbered list (1., 2., etc.)
+    const numberMatch = line.match(/^\d+[\.\)]\s*(.+)$/);
+    // Pattern 3: Chinese numbers (一、, 二、, etc.)
+    const chineseMatch = line.match(/^[一二三四五六七八九十]+[、\.]\s*(.+)$/);
+    // Pattern 4: Plain line with content (fallback)
+    const plainMatch = line.match(/^\s*(.+)$/);
+    
+    const match = bulletMatch || numberMatch || chineseMatch || plainMatch;
+    
     if (match && match[1].trim()) {
-      topics.push(match[1].trim());
+      const topic = match[1].trim();
+      // Filter out header-like lines
+      if (!topic.startsWith('#') && !topic.startsWith('##') && topic.length > 5) {
+        topics.push(topic);
+        console.log('[parseTopics] Found topic:', topic);
+      }
     }
   }
-
+  
+  console.log('[parseTopics] Total topics found:', topics.length);
   return topics.slice(0, 10); // Max 10 topics
 }
 

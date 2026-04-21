@@ -130,6 +130,11 @@ export class AIService {
 
   // Call OpenRouter API
   async callAI(messages, maxTokens = 500, temperature = 0.7) {
+    console.log('[AIService.callAI] Starting API call...');
+    console.log('[AIService.callAI] API Key:', this.apiKey ? this.apiKey.substring(0, 10) + '***' : 'MISSING');
+    console.log('[AIService.callAI] Model:', this.model);
+    console.log('[AIService.callAI] Messages:', JSON.stringify(messages).substring(0, 200));
+    
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
@@ -153,21 +158,30 @@ export class AIService {
       });
 
       clearTimeout(timeoutId);
+      console.log('[AIService.callAI] Response status:', response.status, response.statusText);
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`OpenRouter API error: ${response.status} ${error}`);
+        const errorText = await response.text();
+        console.error('[AIService.callAI] API Error response:', errorText);
+        throw new Error(`OpenRouter API error: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('[AIService.callAI] API response data:', JSON.stringify(data).substring(0, 300));
+      
+      const content = data.choices[0]?.message?.content || '';
+      console.log('[AIService.callAI] Extracted content:', content?.substring(0, 100));
+      
       return {
-        content: data.choices[0]?.message?.content || '',
+        content: content,
         tokensUsed: data.usage?.total_tokens || null,
         model: data.model
       };
     } catch (error) {
       clearTimeout(timeoutId);
+      console.error('[AIService.callAI] Error:', error.message);
       if (error.name === 'AbortError') {
+        console.error('[AIService.callAI] Timeout error');
         throw new Error('AI request timeout');
       }
       throw error;
