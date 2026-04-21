@@ -70,18 +70,37 @@ export default function DailyPage() {
   }
 
   async function handleGenerateAITopics(category = 'general') {
+    console.log('[DailyPage] Starting AI topic generation, category:', category);
     setGeneratingTopic(true);
     try {
+      console.log('[DailyPage] Sending API request to /ai/generate-topic');
       const response = await api.post('/ai/generate-topic', {
         category,
         relationshipStage: 'stable'
       });
+      console.log('[DailyPage] API response:', response.data);
       if (response.data.success) {
+        console.log('[DailyPage] Topics generated:', response.data.data.topics);
         setGeneratedTopics(response.data.data.topics);
+      } else {
+        console.error('[DailyPage] API returned success=false:', response.data);
+        alert(response.data.error || 'AI 话题生成失败');
       }
     } catch (error) {
-      console.error('Generate AI topics error:', error);
-      alert('AI 话题生成失败，请稍后再试');
+      console.error('[DailyPage] Generate AI topics error:', error);
+      console.error('[DailyPage] Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        statusText: error.response?.statusText
+      });
+      if (error.response?.status === 503) {
+        alert('AI 服务未配置，请联系管理员设置 OPENROUTER_API_KEY');
+      } else if (error.response?.status === 429) {
+        alert('AI 调用频率过高，请稍后再试');
+      } else {
+        alert('AI 话题生成失败：' + (error.response?.data?.error || error.message || '请稍后再试'));
+      }
     } finally {
       setGeneratingTopic(false);
     }
