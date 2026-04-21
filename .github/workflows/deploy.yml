@@ -1,8 +1,11 @@
-name: Deploy to Cloudflare
+name: Deploy Worker Backend
 
 on:
   push:
     branches: [main, master]
+    paths:
+      - 'worker/**'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 env:
@@ -11,12 +14,9 @@ env:
   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
 jobs:
-  deploy:
+  deploy-worker:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: read
-      deployments: write
     
     steps:
       - name: Checkout
@@ -30,31 +30,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       
-      - name: Install dependencies
-        run: |
-          npm install --include=dev
-          cd frontend && npm install --include=dev
-          cd ../worker && npm install --include=dev
-      
-      - name: Verify installation
-        run: |
-          which vite || echo "vite not in PATH"
-          ls -la frontend/node_modules/.bin/vite || echo "vite binary not found"
-      
-      - name: Build frontend
-        working-directory: ./frontend
-        run: ./node_modules/.bin/vite build
-      
-      - name: Deploy Frontend to Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: frontend
-          command: pages deploy dist --project-name sweetspace --commit-dirty=true
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Install worker dependencies
+        working-directory: ./worker
+        run: npm ci
       
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
@@ -64,22 +42,10 @@ jobs:
           workingDirectory: worker
           packageManager: npm
       
-      - name: Initialize Database
-        run: |
-          cd worker
-          echo "Applying schema to D1..."
-          npx wrangler d1 execute love-space-db --file=./schema.sql --remote || echo "Schema may already exist"
-        continue-on-error: true
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        
       - name: Deployment Summary
         run: |
-          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Worker Deployed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Frontend and Worker deployed successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Backend Worker deployed successfully!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### URLs" >> $GITHUB_STEP_SUMMARY
-          echo "- Frontend: https://love-space.pages.dev" >> $GITHUB_STEP_SUMMARY
-          echo "- Worker API: https://sweetspace.<your-subdomain>.workers.dev" >> $GITHUB_STEP_SUMMARY
+          echo "Worker URL: https://sweetspace.248851185.workers.dev" >> $GITHUB_STEP_SUMMARY
