@@ -181,15 +181,19 @@ export class AIService {
       throw new Error('AI service is not enabled. Please configure OPENROUTER_API_KEY');
     }
 
-    // Check rate limit
-    const rateLimit = await this.checkRateLimit();
+    // Check rate limit (skip if user.id is missing)
+    const rateLimit = this.user?.id ? await this.checkRateLimit() : { allowed: true, remaining: 100 };
     if (!rateLimit.allowed) {
       throw new Error(`AI rate limit exceeded. Try again tomorrow. Remaining: ${rateLimit.remaining}`);
     }
 
-    // Try cache first
-    const cached = await this.getCachedResponse(requestType, prompt);
+    // Try cache first (skip if user.id is missing)
+    let cached = null;
+    if (this.user?.id) {
+      cached = await this.getCachedResponse(requestType, prompt);
+    }
     if (cached) {
+      console.log('Cache hit for request:', requestType);
       return cached;
     }
 
@@ -206,11 +210,13 @@ export class AIService {
       try {
         const result = await this.callAI(messages);
 
-        // Cache the response
-        await this.cacheResponse(requestType, prompt, result.content);
+        // Cache the response (skip if user.id is missing)
+        if (this.user?.id) {
+          await this.cacheResponse(requestType, prompt, result.content);
+          await this.logUsage(requestType, result.tokensUsed);
+        }
 
-        // Log usage
-        await this.logUsage(requestType, result.tokensUsed);
+        console.log('AI call successful, response:', result.content?.substring(0, 50));
 
         return {
           content: result.content,
@@ -219,6 +225,7 @@ export class AIService {
         };
       } catch (error) {
         lastError = error;
+        console.log(`AI call attempt ${attempt} failed:`, error.message);
         if (attempt < 3) {
           // Wait before retry (exponential backoff)
           await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));

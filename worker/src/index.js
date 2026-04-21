@@ -205,17 +205,28 @@ async function getUserFromRequest(request, env) {
     ).first();
     
     if (userQuery) {
+      console.log('系统已初始化，用户:', userQuery.id);
       // 系统已初始化，返回用户信息（允许访问）
       return {
         ...userQuery,
         needs_init: false
       };
+    } else {
+      console.log('数据库无用户，需要初始化');
     }
   } catch (e) {
-    console.log('检查初始化状态失败:', e.message);
+    console.error('检查初始化状态失败:', e.message);
+    // 数据库访问失败，返回一个临时用户允许访问
+    return {
+      id: 'temp-user',
+      email: 'temp@unknown.com',
+      name: 'Temp User',
+      needs_init: false
+    };
   }
   
   // 系统未初始化，返回需要初始化的标记
+  console.log('系统未初始化，返回 needs_init: true');
   return {
     id: null,
     email: null,
