@@ -124,10 +124,12 @@ async function handleGetWeekData(request, env, user) {
     WHERE user_id = ? AND date IN (${dates.map(() => '?').join(',')})
     ORDER BY date
   `).bind(user.id, ...dates).all();
+  
+  const healthRecordsArray = healthRecords.results || [];
 
   // 计算每一天的周期信息
   const weekData = dates.map(date => {
-    const health = healthRecords.find(h => h.date === date);
+    const health = healthRecordsArray.find(h => h.date === date);
     const cycleDay = cycle ? calculateCycleDay(cycle.cycle_start_date, date) : null;
     const periodPhase = cycle && cycleDay ? calculatePeriodPhase(cycleDay, cycle.period_length, cycle.cycle_length) : null;
     const isPeriod = cycle && cycleDay <= cycle.period_length;
